@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Processing</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<h1>Meeting Minutes Generator - Status</h1>
+
+<div id="status-div" style="text-align:center;">
+  Status: Checking...
+</div>
+
+<script type="text/javascript">
+  var task_id = "{{ task_id }}";  // task_id from Flask
+
+  function updateStatus() {
+    $.getJSON(`/status/${task_id}`, function(data) {
+      $("#status-div").text(`Status: ${data.status}`);
+      if (data.status !== 'SUCCESS') {
+        setTimeout(updateStatus, 10000);  // Update every 10 seconds
+      } else {
+        $("#status-div").html(`Meeting Minutes: ${data.result}`);
+      }
+    });
+  }
+  
+  updateStatus();  // Initial call
+</script>
+
+</body>
+</html>
