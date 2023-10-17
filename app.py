@@ -6,6 +6,8 @@ import uuid
 import os
 from dotenv import load_dotenv
 
+from utils import convert_to_wav, crop_into_segments
+
 app = Flask(__name__)
 
 load_dotenv()
@@ -25,10 +27,22 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 
+if not os.path.exists(os.path.join(os.getcwd(),"temp")):
+    os.makedirs(os.path.join(os.getcwd(),"temp"))
+
+if not os.path.exists(os.path.join(os.getcwd(),"media_storage")):
+    os.makedirs(os.path.join(os.getcwd(),"media_storage"))
+
+
 @celery.task
 def process_file(file_path, model_type):
-    time.sleep(10)
+    output_wav_path = convert_to_wav(file_path)
+    for chunk in crop_into_segments(output_wav_path):
+        print(f"processing chunk {chunk} in generator fashion")
+    time.sleep(5)
+
     return "Here is the MoM of this file."
+
 
 @app.route('/status/<task_id>')
 def task_status(task_id):
@@ -41,6 +55,7 @@ def task_status(task_id):
 def show_result(task_id):
     return render_template('result.html', task_id=task_id)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -48,7 +63,7 @@ def index():
         model_type = request.form.get('model_type')
         
         unique_filename = str(uuid.uuid4()) + '_' + audio_file.filename
-        file_path = f"./{unique_filename}"
+        file_path = os.path.join(os.getcwd(),"media_storage",unique_filename)
         audio_file.save(file_path)
 
         task = process_file.apply_async((file_path, model_type), time_limit=120)

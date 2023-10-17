@@ -4,4 +4,5 @@ redis
 transformers[torch]
 torchaudio
 python-dotenv
-
+librosa
+pydub
