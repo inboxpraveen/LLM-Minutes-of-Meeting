@@ -36,16 +36,48 @@ if not os.path.exists(os.path.join(os.getcwd(),"media_storage")):
 
 @celery.task
 def process_file(file_path, model_type):
+    """
+    Asynchronously process an audio file to generate a transcript and minutes of the meeting (MoM).
+    
+    Parameters:
+    - file_path (str): The full path to the audio file to be processed.
+    - model_type (str): The type of speech-to-text model to use for the transcription.
+    
+    Returns:
+    str: A message indicating that the Minutes of Meeting have been prepared.
+    
+    Example:
+    ```
+    task = process_file.apply_async(('path/to/file', 'ASR_Model_Type'), time_limit=120)
+    ```
+    """
     output_wav_path = convert_to_wav(file_path)
     for chunk in crop_into_segments(output_wav_path):
+        ## Convert each chunk into speech transcrripts
+        ## and then generate a complete conversation
         print(f"processing chunk {chunk} in generator fashion")
     time.sleep(5)
+    ## and then prepare minutes of meeting of whole conversation as input.
 
     return "Here is the MoM of this file."
 
 
 @app.route('/status/<task_id>')
 def task_status(task_id):
+    """
+    Fetches the status of a given Celery task.
+    
+    Parameters:
+    - task_id (str): The ID of the Celery task whose status is to be checked.
+    
+    Returns:
+    JSON: A JSON object containing the task's current status and any result if available.
+    
+    Example:
+    ```
+    GET /status/<task_id>
+    ```
+    """
     task = process_file.AsyncResult(task_id)
     if task.state == 'SUCCESS':
         session['result'] = task.result
@@ -53,11 +85,40 @@ def task_status(task_id):
 
 @app.route('/result/<task_id>')
 def show_result(task_id):
+    """
+    Renders the result page which will display the output of the processed audio file.
+    
+    Parameters:
+    - task_id (str): The ID of the Celery task whose result is to be displayed.
+    
+    Returns:
+    HTML: Rendered 'result.html' template.
+    
+    Example:
+    ```
+    GET /result/<task_id>
+    ```
+    """
     return render_template('result.html', task_id=task_id)
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    """
+    Index route that either renders the file upload form or initiates file processing.
+    
+    On a GET request, renders the index page with a form to upload an audio file and select a model.
+    On a POST request, initiates asynchronous processing of the uploaded audio file.
+    
+    Returns:
+    HTML or Redirect: Rendered 'index.html' template or a redirection to the result route.
+    
+    Example:
+    ```
+    GET /
+    POST / (with 'file' and 'model_type' as form-data)
+    ```
+    """
     if request.method == 'POST':
         audio_file = request.files.get('file')
         model_type = request.form.get('model_type')
