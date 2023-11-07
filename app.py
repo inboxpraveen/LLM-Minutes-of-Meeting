@@ -58,8 +58,41 @@ def process_file(file_path, model_type):
         print(f"processing chunk {chunk} in generator fashion")
     time.sleep(5)
     ## and then prepare minutes of meeting of whole conversation as input.
+    mom = """Meeting Minutes<br /><br />
+Date: [Date]<br />
+Time: [Time]<br />
+Location: [Location]<br />
+<br /><br />
+Attendees:<br />
+[List of Attendees]<br />
+<br /><br />
+Agenda:<br />
+[Agenda item 1]<br /><br />
 
-    return "Here is the MoM of this file."
+[Discussion and actions]<br /><br />
+[Agenda item 2]<br />
+
+[Discussion and actions]<br /><br />
+[Agenda item 3]<br />
+...<br />
+<br /><br />
+Meeting Minutes:<br />
+[Brief summary of discussions and decisions for each agenda item]<br />
+[Details of discussions]<br />
+[Decisions made]<br />
+[Assigned action items, if any, with responsible persons and deadlines]<br />
+Meeting adjourned at [End Time]<br />
+<br /><br />
+Possible Next Meeting:<br />
+Date: [Next Meeting Date]<br />
+Time: [Next Meeting Time]<br />
+Location: [Next Meeting Location]<br />
+Agenda: [List of agenda items for the next meeting]<br />
+<br /><br />
+Action Items:<br />
+[List of action items, responsible persons, and deadlines]"""
+
+    return mom
 
 
 @app.route('/status/<task_id>')

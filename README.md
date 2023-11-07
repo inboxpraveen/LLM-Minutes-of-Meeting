@@ -21,3 +21,7 @@ Boost productivity by quickly generating meeting minutes from your recorded disc
 
 ## Contributions Welcome: 
 👩‍💻 We encourage contributions from the community to make this tool a game-changer for meetings everywhere. Contribute your ideas and expertise to help us achieve real-time transcription!
+
+
+## Instructions to run parallely
+celery -A app.celery worker
