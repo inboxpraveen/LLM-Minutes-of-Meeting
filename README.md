@@ -1,7 +1,7 @@
 # LLM-Minutes-of-Meeting
 <img src="static/images/MoM Tool Image.png" alt="Meeting Minutes AI Image" />
 
-The primary objective of this project is to showcase NLP & LLM's capability to quickly summarize long meetings and help you and your organization auto mate the task of delegating Minutes of Meeting(MoM) emails. It uses a high level 2 step approach where step 1 corresponds to convert any audio/video file into a text piece. Step 2 corresponds to using text produce by step 1 and generate Minutes of meeting. These minutes of meeting will be editable piece of text. Once you finalize the MoM, you can use it further as per your requirement. 
+The primary objective of this project is to showcase NLP & LLM's capability to quickly summarize long meetings and help you and your organization automate the task of delegating Minutes of Meeting(MoM) emails. It uses a high level 2 step approach where step 1 corresponds to convert any audio/video file into a text piece. Step 2 corresponds to using text produce by step 1 and generate Minutes of meeting. These minutes of meeting will be editable piece of text. Once you finalize the MoM, you can use it further as per your requirement. 
 
 However, long term objective for this repository is also to develop a real time python web-application which can attend meetings for you and also provide you MoM at the end of the meeting. Taking baby steps and trying to get to long-term by starting a short term objective.
 
