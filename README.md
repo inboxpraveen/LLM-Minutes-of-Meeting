@@ -5,7 +5,10 @@ The primary objective of this project is to showcase NLP & LLM's capability to q
 
 However, long term objective for this repository is also to develop a real time python web-application which can attend meetings for you and also provide you MoM at the end of the meeting. Taking baby steps and trying to get to long-term by starting a short term objective.
 
+
+
 ## Features:
+
 - Effortlessly convert audio and video files to accurate text transcripts: These can also be used to summarize, generate action items, understanding work-flows, and resource planning. 
 
 - Keyword highlighting and topic tagging for quick reference: Extracting topics and finding relevant contents to skip through meetings and listen to only specific topics which is of your interest.
@@ -14,7 +17,9 @@ However, long term objective for this repository is also to develop a real time 
 
 - User-friendly interface for easy customization and integration: Easy to tweak which ever open-source or closed source model you want to choose. 
 
-## Approach and Implementation
+
+
+## Approach and Implementation:
 
 ### Overview
 
@@ -146,7 +151,7 @@ Before proceeding, ensure you have the following installed:
 
 
 
-## Troubleshooting:
+## Troubleshooting: :bug: 
 
 - Ensure all environment variables required by the application and Celery are correctly set.
 - Check for any error messages in the Flask and Celery terminal outputs.
@@ -154,8 +159,8 @@ Before proceeding, ensure you have the following installed:
 
 
 
-## Phase 2: Real-Time Transcription: 
-🗣️ In Phase 2 of our project, we plan to enable real-time meeting transcription. Join us in shaping the future of efficient and collaborative meetings!
+## Phase 2 - Real-Time Transcriptions: 
+In Phase 2 of our project, we plan to enable real-time meeting transcription. Join us in shaping the future of efficient and collaborative meetings!
 
 
 
@@ -168,7 +173,3 @@ Before proceeding, ensure you have the following installed:
 ## Contributions Welcome: 
 
 👩‍💻 Encouraging contributions from the community to make this tool a game-changer for meetings everywhere. Contribute your ideas and expertise to help us achieve real-time transcription!
-
-
-## Instructions to run parallely
-celery -A app.celery worker
