@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from utils import convert_to_wav, crop_into_segments
+from speech import Faster_Whisper, OpenAI_Whisper
 
 app = Flask(__name__)
 
@@ -33,27 +34,37 @@ if not os.path.exists(os.path.join(os.getcwd(),"temp")):
 if not os.path.exists(os.path.join(os.getcwd(),"media_storage")):
     os.makedirs(os.path.join(os.getcwd(),"media_storage"))
 
+print("Loading Speech Model...")
+MODEL_TO_RUN = "tiny.en"
+MODEL_ARCHITECTURE = "faster_whisper"
+
+if MODEL_ARCHITECTURE == "faster_whisper":
+    speech_pipeline = Faster_Whisper(MODEL_TO_RUN)
+elif MODEL_ARCHITECTURE == "openai_whisper":
+    speech_pipeline = OpenAI_Whisper(MODEL_TO_RUN)
+
 
 @celery.task
-def process_file(file_path, model_type):
+def process_file(file_path):
     """
     Asynchronously process an audio file to generate a transcript and minutes of the meeting (MoM).
     
     Parameters:
     - file_path (str): The full path to the audio file to be processed.
-    - model_type (str): The type of speech-to-text model to use for the transcription.
     
     Returns:
     str: A message indicating that the Minutes of Meeting have been prepared.
     
     Example:
     ```
-    task = process_file.apply_async(('path/to/file', 'ASR_Model_Type'), time_limit=120)
+    task = process_file.apply_async(('path/to/file'), time_limit=120)
     ```
     """
     output_wav_path = convert_to_wav(file_path)
+    meeting_transcription = ""
     for chunk in crop_into_segments(output_wav_path):
         ## Convert each chunk into speech transcrripts
+        meeting_transcription += f" {speech_pipeline(chunk)}"
         ## and then generate a complete conversation
         print(f"processing chunk {chunk} in generator fashion")
     time.sleep(5)
