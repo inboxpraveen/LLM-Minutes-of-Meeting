@@ -5,9 +5,15 @@ The primary objective of this project is to showcase NLP & LLM's capability to q
 
 However, long term objective for this repository is also to develop a real time python web-application which can attend meetings for you and also provide you MoM at the end of the meeting. Taking baby steps and trying to get to long-term by starting a short term objective.
 
+------
+
+**<u>For your Information</u>: I am working on training a custom LLM. Please be patient while I train it. I will add training & inference code once completed. Do :star: This repository if you need to know latest updates.** :smile: **Appreciate your time.** 
+
+------
 
 
-## Features:
+
+## Features: :sparkles: 
 
 - Effortlessly convert audio and video files to accurate text transcripts: These can also be used to summarize, generate action items, understanding work-flows, and resource planning. 
 
@@ -19,7 +25,7 @@ However, long term objective for this repository is also to develop a real time 
 
 
 
-## Approach and Implementation:
+## Approach and Implementation: :bulb: 
 
 ### Overview
 
@@ -39,7 +45,7 @@ The core functionality revolves around processing meeting recordings submitted v
 
 
 
-## Technical Stack
+## Technical Stack: :computer: 
 
 - **Backend**: Python, Flask
 - **Asynchronous Task Queue**: Celery
@@ -49,7 +55,7 @@ The core functionality revolves around processing meeting recordings submitted v
 
 
 
-## Use Cases and Applications
+## Use Cases and Applications: :white_check_mark: 
 
 1. **Corporate Meetings**: Enhances productivity by providing quick and accurate minutes for various corporate gatherings, board meetings, and team discussions.
 2. **Educational Institutions**: Useful for lecturers and students to transcribe and summarize lectures, seminars, and group discussions.
@@ -59,7 +65,7 @@ The core functionality revolves around processing meeting recordings submitted v
 
 
 
-## Future Scope and Enhancements
+## Future Scope and Enhancements: :crystal_ball: 
 
 - Integration with video conferencing tools for direct recording capture.
 - Multi-language support for speech-to-text conversion.
@@ -159,7 +165,7 @@ Before proceeding, ensure you have the following installed:
 
 
 
-## Phase 2 - Real-Time Transcriptions: 
+## Phase 2 - Real-Time Transcriptions: :next_track_button: 
 In Phase 2 of our project, we plan to enable real-time meeting transcription. Join us in shaping the future of efficient and collaborative meetings!
 
 
