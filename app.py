@@ -57,42 +57,38 @@ def process_file(file_path, model_type):
         ## and then generate a complete conversation
         print(f"processing chunk {chunk} in generator fashion")
     time.sleep(5)
+
+    """
+    I am working on this part to train a custom LLM that can generate minutes of meeting.
+
+    Stay tuned and follow me for latest updates. I will be sharing the training and inference script along with the changes here.
+    """
+
     ## and then prepare minutes of meeting of whole conversation as input.
-    mom = """Meeting Minutes<br /><br />
-Date: [Date]<br />
-Time: [Time]<br />
-Location: [Location]<br />
-<br /><br />
-Attendees:<br />
-[List of Attendees]<br />
-<br /><br />
-Agenda:<br />
-[Agenda item 1]<br /><br />
+    minutes_of_meeting = """<br><h3>Here is your Meeting Minutes:</h3><br>
+Date: [Date]<br>
+Time: [Time]<br>
+<br>
+<h4>[Attendees:]</h4>
+List of Attendees<br>
+<br>
+<h4>[Agenda:]</h4>
+Agenda item 1<br><br>
+<h4>[Meeting Minutes:]</h4>
+Brief summary of discussions and decisions for each agenda item<br>
+Details of discussions<br>
+Decisions made<br>
+<br>
+<h4>[Possible Next Meeting:]</h4>
+Date: Next Meeting Date<br>
+Time: Next Meeting Time<br>
+Location: Next Meeting Location<br>
+Agenda: List of agenda items for the next meeting<br>
+<br>
+<h4>[Action Items:]</h4>
+List of action items, responsible persons, and deadlines"""
 
-[Discussion and actions]<br /><br />
-[Agenda item 2]<br />
-
-[Discussion and actions]<br /><br />
-[Agenda item 3]<br />
-...<br />
-<br /><br />
-Meeting Minutes:<br />
-[Brief summary of discussions and decisions for each agenda item]<br />
-[Details of discussions]<br />
-[Decisions made]<br />
-[Assigned action items, if any, with responsible persons and deadlines]<br />
-Meeting adjourned at [End Time]<br />
-<br /><br />
-Possible Next Meeting:<br />
-Date: [Next Meeting Date]<br />
-Time: [Next Meeting Time]<br />
-Location: [Next Meeting Location]<br />
-Agenda: [List of agenda items for the next meeting]<br />
-<br /><br />
-Action Items:<br />
-[List of action items, responsible persons, and deadlines]"""
-
-    return mom
+    return minutes_of_meeting
 
 
 @app.route('/status/<task_id>')
