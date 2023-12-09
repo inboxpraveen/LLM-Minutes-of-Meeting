@@ -39,6 +39,10 @@ The core functionality revolves around processing meeting recordings submitted v
 4. **Text Processing with LLM**: After transcription, the text is processed using a large language model (LLM) to distill the content into minutes. This involves summarizing, identifying key points, and organizing the information in a structured format.
 5. **Result Delivery**: The final minutes of the meeting are sent back to the frontend, where they are displayed for the user to review, edit, and save.
 
+Data Preparation for LLM Loop:
+
+<img src="static/images/MoM Data Preparation Flow.png" alt="Data Preparation Loop Flow Diagram" />
+
 
 
 <img src="static/images/LLM MOM Approach Diagram.png" height="500px" alt="Approach Diagram" />
