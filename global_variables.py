@@ -29,7 +29,7 @@ SPEECH_MODELS = (
     "openai/whisper-small"
 )
 
-DEFAULT_SPEECH_MODEL = "distil-whisper/distil-large-v2"
+DEFAULT_SPEECH_MODEL = "openai/whisper-medium"
 SPEECH_MODEL_PATH = os.path.join(BASE_MODEL_DIRECTORY, DEFAULT_SPEECH_MODEL)
 
 SUMMARY_MODELS = (

@@ -5,3 +5,7 @@ python-dotenv
 librosa
 pydub
 moviepy
+celery
+redis
+ffmpeg-python
+markdown

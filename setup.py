@@ -42,4 +42,4 @@ def download_summary_model():
     os.popen(f"huggingface-cli download '{DEFAULT_SUMMARY_MODEL[0]}' '{DEFAULT_SUMMARY_MODEL[1]}' --local-dir {SUMMARY_MODEL_PATH} --local-dir-use-symlinks False").read()
 
 download_speech_model()
-download_summary_model()
+# download_summary_model()

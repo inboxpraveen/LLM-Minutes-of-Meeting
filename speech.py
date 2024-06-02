@@ -37,8 +37,9 @@ class SpeechRecognition:
     
     def transcribe(self, audio_path):
         print(f"Transcribing...")
-        result = self.speech_pipeline(audio_path)
+        result = self.speech_pipeline(audio_path, return_timestamps=False)
         print(f"Finished Transcribing...")
+        print(f"{result}")
         return result['text']
     
     def clear_memory(self):

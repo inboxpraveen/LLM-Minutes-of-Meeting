@@ -1,11 +1,10 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-
-  <meta charset="utf-8" />
-
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
   <title>LLM - Minutes of Meeting</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,88 +12,33 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap"
     rel="stylesheet" />
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
-  <section class="container my-5">
-    <div class="row">
-      <div class="col-12 text-center">
-        <h1>LLM Minutes of Meeting</h1>
-        <p>
-          Effortlessly convert audio and video files to accurate text transcripts. Automatically summarize transcripts
-          into meeting minutes. Keyword highlighting and topic tagging for quick reference. Export minutes in various
-          formats, including PDF and plain text. User-friendly interface for easy customization and integration.
-        </p>
-      </div>
-    </div>
-  </section>
-  <section class="container my-5">
-    <div class="row">
-      <div class="col-lg-4 col-md-6 mx-auto">
-        <div class="card shadow">
-          <div class="card-body text-center">
+  <h1>Upload your MP4 Video or Audio File</h1>
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".mp4,audio/*">
+    <button type="submit">Upload</button>
+  </form>
 
-            <h2>Minutes of Meeting Form</h2>
-            <p>Upload your meeting recording...</p>
-
-            <form action="/" method="post" enctype="multipart/form-data">
-
-              <div class="mb-3">
-                <label for="fileUpload" class="form-label">Choose file</label>
-                <input type="file" name="file" class="form-control" id="fileUpload" required>
-              </div>
-
-              <div class="mb-3">
-                <label for="selectOption" class="form-label">Select Option</label>
-                <select class="form-select" name="model_type" id="selectOption" required>
-                  <option selected disabled value="">Choose...</option>
-                  <option value="huggingface">Hugging Face Seq2Seq</option>
-                  <option value="openai">OpenAI API</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <button type="submit" class="btn btn-primary">Submit</button>
-              </div>
-
-            </form>
-
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+  $(document).ready(function() {
+      var intervalId = setInterval(function() {
+          $.getJSON('/check_task/' + '{{ task_id }}', function(data) {
+              if (data.status == 'SUCCESS') {
+                alert('Processing complete! You are being redirected to the results page.');
+                window.location.href = "/results/" + '{{ task_id }}';
+                clearInterval(intervalId);
+            }
+          });
+      }, 10000);
+  });
+  </script>
 
 </body>
 
-</html> -->
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video/Audio Upload and Process</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <h1>Upload your MP4 Video or Audio File</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".mp4,audio/*">
-        <button type="submit">Upload</button>
-    </form>
-    {% if summary %}
-        <h2>Minutes of Meeting:</h2>
-        <p>{{ summary }}</p>
-    {% endif %}
-</body>
 </html>
-
-

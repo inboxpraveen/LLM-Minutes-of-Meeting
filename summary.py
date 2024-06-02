@@ -10,8 +10,8 @@ class SummaryModel:
         self.summary_llm = Llama(
             model_path=os.path.join(SUMMARY_MODEL_PATH, DEFAULT_SUMMARY_MODEL[1]),
             n_ctx=2048,
-            n_threads=8,
-            n_gpu_layers=35,
+            n_threads=4,
+            n_gpu_layers=-1,
         )
         self.prompt = """<|user|>
 You are provided with a conversation. Develop a comprehensive Minutes of Meeting consider the following Instructions.
