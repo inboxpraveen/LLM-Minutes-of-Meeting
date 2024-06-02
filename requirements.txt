@@ -1,8 +1,7 @@
 Flask
-celery
-redis
 transformers[torch]
 torchaudio
 python-dotenv
 librosa
 pydub
+moviepy
