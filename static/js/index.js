@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     notificationButton.onclick = function() {
         notificationModel.style.display = "block";
+        if ($('#notif-text').text().trim() === '') {
+            $('#notif-text').text('<li>No new notifications</li>');
+        }
     }
 
     notificationCloseButton.onclick = function() {

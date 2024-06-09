@@ -15,7 +15,7 @@ def make_celery(app):
     celery = Celery(
         app.import_name,
         backend='redis://localhost:6379/0',
-        broker='amqp://admin:1mj16cs105%40PK$@localhost:5672//'
+        broker='amqp://<user>:<password>$@localhost:5672//'
     )
     celery.conf.update(app.config)
     class ContextTask(celery.Task):
@@ -41,7 +41,8 @@ def check_task(task_id):
     task = process_audio.AsyncResult(task_id)
     response = {
         'status': task.state,
-        'info': task.info.get('info', 'COMPLETED')
+        'info': task.info.get('info', 'COMPLETED'),
+        'filename': task.info.get('audio_filename', '')
     }
     return jsonify(response)
 

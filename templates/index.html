@@ -33,7 +33,8 @@
       <div class="notification-modal-content">
         <span class="notification-close-button" id="notificationCloseButton">&times;</span>
           <div class="notification-modal-body" id="notification">
-            <span id="notif-text"></span>
+            <!-- <span id="notif-text">No new notifications</span> -->
+            <ul id="notif-list"></ul>
           </div>
       </div>
   </div>
@@ -54,8 +55,17 @@
   </div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
   <script>
     $(document).ready(function() {
+        $('#meetingButton').click(function() {
+            $('#meetingModal').show();
+        });
+    
+        $('#meetingCloseButton').click(function() {
+            $('#meetingModal').hide();
+        });
+    
         $('form').submit(function(event) {
             event.preventDefault();
             var formData = new FormData(this);
@@ -66,28 +76,43 @@
                 contentType: false,
                 processData: false,
                 success: function(data) {
-                    $('#notification').show();
-                    $('#notif-text').text('Upload successful. Processing...');
+                    $('#meetingModal').hide();
+                    $('#notificationModel').show();
+                    $('<li id="task-' + data.task_id + '">Upload successful. Processing...</li>').appendTo('#notif-list');
                     checkTaskStatus(data.task_id);
-                }
-            }); 
-        });
-    });
-    
-    function checkTaskStatus(taskId) {
-        var intervalId = setInterval(function() {
-            $.getJSON('/check_task/' + taskId, function(data) {
-                console.log(data);
-                if (data.status === 'COMPLETED' || data.status === 'SUCCESS') {
-                    $('#notif-text').html('<a href="/results/' + taskId + '">Processing complete! Click to view results.</a>');
-                    clearInterval(intervalId);
-                } else if (data.status === 'PROGRESS' || data.status === 'STARTED') {
-                    $('#notif-text').text(data.info || 'something is happening...');
-                } else {
-                    $('#notif-text').text('Processing...');
+                },
+                error: function() {
+                    $('<li>Failed to upload. Try again.</li>').appendTo('#notif-list');
                 }
             });
-        }, 5000);
-    }
+        });
+    
+        function checkTaskStatus(taskId) {
+            var intervalId = setInterval(function() {
+                $.getJSON('/check_task/' + taskId, function(data) {
+                    if (data.status === 'COMPLETED' || data.status === 'SUCCESS') {
+                        $('#task-' + taskId).html(data.filename +': <a href="/results/' + taskId + '" target="_blank">Click to view results.</a>');
+                        clearInterval(intervalId);
+                    } else {
+                        $('#task-' + taskId).text(data.filename + ': ' + data.info);
+                    }
+                });
+            }, 5000);
+        }
+    
+        $('#notificationCloseButton').click(function() {
+            $('#notificationModel').hide();
+        });
+    
+        $(window).click(function(event) {
+            if (event.target == document.getElementById('meetingModal')) {
+                $('#meetingModal').hide();
+            }
+            if (event.target == document.getElementById('notificationModel')) {
+                $('#notificationModel').hide();
+            }
+        });
+    });
     </script>
 </body>
+</html>

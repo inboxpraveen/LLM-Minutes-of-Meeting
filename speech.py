@@ -1,5 +1,4 @@
 import torch
-import os
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
 from global_variables import SPEECH_MODEL_PATH

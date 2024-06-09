@@ -209,9 +209,16 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    margin: 10px auto;
 }
 
-
+.notification-modal-body li {
+    margin: 5px auto;
+    padding: 5px 10px;
+    text-decoration: none;
+    list-style: none;
+    list-style-type: none;
+}
 
 
 .container-table {
