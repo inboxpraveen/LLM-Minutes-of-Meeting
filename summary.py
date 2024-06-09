@@ -1,45 +1,42 @@
 import os
 from llama_cpp import Llama
+import torch
 
 from global_variables import DEFAULT_SUMMARY_MODEL, SUMMARY_MODEL_PATH
 
-class SummaryModel:
-
-    def __init__(self) -> None:
-        print(f"Loading Summary LLM")
-        self.summary_llm = Llama(
-            model_path=os.path.join(SUMMARY_MODEL_PATH, DEFAULT_SUMMARY_MODEL[1]),
-            n_ctx=2048,
-            n_threads=4,
-            n_gpu_layers=-1,
-        )
-        self.prompt = """<|user|>
-You are provided with a conversation. Develop a comprehensive Minutes of Meeting consider the following Instructions.
-Instructions:
-Discussion Points: Detail the topics discussed, including any debates or alternate viewpoints.
-Decisions Made: Record all decisions, including who made them and the rationale.
-Action Items: Specify tasks assigned, responsible individuals, and deadlines.
-Data & Insights: Summarize any data presented or insights shared that influenced the meeting's course.
-Follow-Up: Note any agreed-upon follow-up meetings or checkpoints.
-
-===
-Conversation:
+def get_minutes_of_meeting(conversation):
+    print(f"Loading Summary LLM")
+    summary_llm = Llama(
+        model_path=os.path.join(SUMMARY_MODEL_PATH, DEFAULT_SUMMARY_MODEL[1]),
+        n_ctx=700,
+        n_threads=8,
+        n_gpu_layers=-1,
+    )
+    prompt = """<|user|>The conversation is given below:
+======
 {conversation}
-===<|end|>
-<|assistant|>"""
-        print(f"Loaded Summary LLM")
+======
 
-    def get_mom(self, conversation):
-        print(f"Generating MoM")
-        output = self.summary_llm(
-            self.prompt.format(conversation=conversation),
-            stop = ["<|end|>"],
-            max_tokens = 512
-        )
-        print(f"Finished Generating MoM")
-        return output["choices"][0]["text"]
+You are provided with the above conversation without any speaker labels. Develop a comprehensive summary points using the the following Instructions given below.
+
+### Instructions Begin ###
+1. You will analyse the part of conversation and provide me comprehensive summary in bullet points.
+2. You will stict to the facts of the conversations and ensure all points are clear and thorough.
+3. If any part of the conversation is unclear, think step by step based on the context of the conversation, and then try to summarize it.
+### Instructions End ###
+
+Generate a comprehensive bullet point based summary using the above conversation and Instructions.<|end|>
+<|assistant|>"""
+    print(f"Loaded Summary LLM")
     
-    def clear_memory(self):
-        self.summary_llm = None
-        del self.summary_llm
+    print(f"Generating MoM")
+    output = summary_llm(
+        prompt.format(conversation=conversation),
+        stop = ["<|end|>"],
+        max_tokens = 100
+    )
+    del summary_llm
+    torch.cuda.empty_cache()
+    print(f"Finished Generating MoM")
+    return output["choices"][0]["text"]
 

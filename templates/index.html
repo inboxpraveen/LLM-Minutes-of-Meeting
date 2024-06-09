@@ -1,44 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-
-  <title>LLM - Minutes of Meeting</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap"
-    rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+  </head>
 
 <body>
-  <h1>Upload your MP4 Video or Audio File</h1>
-  <form action="/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".mp4,audio/*">
-    <button type="submit">Upload</button>
-  </form>
+
+  <div class="header">
+    <button class="header-button" id="notificationButton">
+      <i class="bi bi-bell"></i>&nbsp;&nbsp;Notifications
+    </button>
+    <button class="header-button" id="viewRecordingsButton" onclick="window.location.href='recordings.html'">
+        <i class="bi bi-journal-text"></i>&nbsp;&nbsp;History
+    </button>
+  </div>
+
+  <div class="container">
+    <div class="main-content">
+        <img src="{{ url_for('static', filename='images/app/mom.png') }}" alt="Meeting" class="background-image">
+    </div>
+    <div class="footer">
+        <button class="meeting-button" id="meetingButton"><i class="bi bi-pen"></i>&nbsp;&nbsp;New Minutes of Meeting</button>
+    </div>
+  </div>
+
+  <div id="notificationModel" class="notification-modal">
+      <div class="notification-modal-content">
+        <span class="notification-close-button" id="notificationCloseButton">&times;</span>
+          <div class="notification-modal-body" id="notification">
+            <span id="notif-text"></span>
+          </div>
+      </div>
+  </div>
+
+  <div id="meetingModal" class="modal">
+      <div class="modal-content">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <span class="close-button" id="meetingCloseButton">&times;</span>
+          <div class="modal-body">
+              <div class="upload-container">
+                  <label for="fileUpload" class="upload-label">Upload File (MP4, MP3, WAV)</label>
+                  <input type="file" id="fileUpload" name="file" class="upload-input" accept=".mp4,.mp3,.wav">
+              </div>
+              <button class="save-button-upload" id="start-process" type="submit"><i class="bi bi-stopwatch-fill"></i>&nbsp;&nbsp;Generate</button>
+          </div>
+        </form>
+      </div>
+  </div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script>
-  $(document).ready(function() {
-      var intervalId = setInterval(function() {
-          $.getJSON('/check_task/' + '{{ task_id }}', function(data) {
-              if (data.status == 'SUCCESS') {
-                alert('Processing complete! You are being redirected to the results page.');
-                window.location.href = "/results/" + '{{ task_id }}';
-                clearInterval(intervalId);
-            }
-          });
-      }, 10000);
-  });
-  </script>
-
+    $(document).ready(function() {
+        $('form').submit(function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            $.ajax({
+                url: '/upload',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(data) {
+                    $('#notification').show();
+                    $('#notif-text').text('Upload successful. Processing...');
+                    checkTaskStatus(data.task_id);
+                }
+            }); 
+        });
+    });
+    
+    function checkTaskStatus(taskId) {
+        var intervalId = setInterval(function() {
+            $.getJSON('/check_task/' + taskId, function(data) {
+                console.log(data);
+                if (data.status === 'COMPLETED' || data.status === 'SUCCESS') {
+                    $('#notif-text').html('<a href="/results/' + taskId + '">Processing complete! Click to view results.</a>');
+                    clearInterval(intervalId);
+                } else if (data.status === 'PROGRESS' || data.status === 'STARTED') {
+                    $('#notif-text').text(data.info || 'something is happening...');
+                } else {
+                    $('#notif-text').text('Processing...');
+                }
+            });
+        }, 5000);
+    }
+    </script>
 </body>
-
-</html>

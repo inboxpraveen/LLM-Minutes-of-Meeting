@@ -1,0 +1,280 @@
+body {
+    margin: 0px;
+    padding: 0px;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 99vh;
+    height: 99vh;
+    overflow-x: hidden;
+    width: 99vw;
+    max-width: 99vw;
+}
+
+.container {
+    padding: 30px;
+    margin: auto;
+    max-width: 1500px;
+    width: 80vw;
+    text-align: center;
+    align-items: center; 
+    justify-content: center
+}
+
+.header {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    width: 100%;
+    display: flex;
+    margin: 2px 10px;
+    padding: 5px 10px;
+    flex-direction: row-reverse;
+    flex-wrap: nowrap;
+    height: fit-content;
+    align-self: center;
+    max-height: 50px;
+    margin: 5px auto;
+    background-color: #fff;
+    opacity: 0.95;
+}
+
+.header-button {
+    padding: 10px 20px;
+    margin: 2px 10px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #ffd5fe;
+}
+
+.header-button:hover {
+    background-color: #aaaeda;
+}
+
+.main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    height: 300px;
+}
+
+.background-image {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+}
+
+.footer {
+    margin: 20px auto;
+}
+
+.meeting-button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #aaaeda;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.meeting-button:hover {
+    background-color: #ffd5fe;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.98);
+    margin: 25px auto;
+    padding: 25px 50px;
+    width: 100%;
+    width: 80vw;
+    max-width: 1500px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.close-button {
+    position: relative;
+    top: 0px;
+    right: 0px;
+    float: right;
+    color: #000000;
+    text-align: center;
+    font-size: 50px;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: rgb(92, 92, 92);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 16px;
+    color: #2b2b2b;
+}
+
+.upload-input {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    max-width: 90%;
+    width: fit-content;
+    border: 1px solid #e2e2e2;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.save-button-upload {
+    padding: 15px 25px;
+    margin: 10px auto;
+    font-size: 20px;
+    background-color: #90eca7;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    align-items: center;
+}
+
+
+.notification-modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.notification-modal-content {
+    background: rgba(255, 255, 255, 0.98);
+    margin: 25px auto;
+    padding: 25px 50px;
+    width: 80vw;
+    max-width: 1500px;
+    text-align: center;
+    border-radius: 5px;
+    min-height: 100px;
+}
+
+.notification-close-button {
+    position: relative;
+    top: 0px;
+    right: 0px;
+    float: right;
+    color: #000000;
+    text-align: center;
+    font-size: 50px;
+}
+
+.notification-close-button:hover,
+.notification-close-button:focus {
+    color: rgb(92, 92, 92);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.notification-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+
+.container-table {
+    padding: 20px;
+    background-color: #fff;
+    width: 800px;
+}
+
+.back-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #E1E1E1;
+    color: black;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.back-button i {
+    margin-right: 10px;
+}
+
+.back-button:hover {
+    background-color: #ddd;
+}
+
+.recordings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.recordings-table th, .recordings-table td {
+    border: 1px solid #ddd;
+    padding: 12px 8px;
+    text-align: left;
+}
+
+.recordings-table th {
+    background-color: #f2f2f2;
+    color: black;
+}
+
+.view-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #E1E1E1;
+    color: black;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: bold
+}
+
+.view-button i {
+    margin-right: 5px;
+}
+
+.view-button:hover {
+    background-color: #ddd;
+}

@@ -29,14 +29,19 @@ SPEECH_MODELS = (
     "openai/whisper-small"
 )
 
-DEFAULT_SPEECH_MODEL = "openai/whisper-medium"
+DEFAULT_SPEECH_MODEL = "openai/whisper-small"
 SPEECH_MODEL_PATH = os.path.join(BASE_MODEL_DIRECTORY, DEFAULT_SPEECH_MODEL)
 
 SUMMARY_MODELS = (
     ("bartowski/Phi-3-medium-128k-instruct-GGUF","Phi-3-medium-128k-instruct-Q6_K.gguf"),
     ("bartowski/Phi-3-medium-128k-instruct-GGUF", "Phi-3-medium-128k-instruct-Q5_K_S.gguf"),
-    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF","Phi-3-mini-128k-instruct.Q8_0.gguf")
+    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF","Phi-3-mini-128k-instruct.Q8_0.gguf"),
+    ("QuantFactory/Phi-3-mini-4k-instruct-GGUF", "Phi-3-mini-4k-instruct.Q5_0.gguf"),
+    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF", "Phi-3-mini-128k-instruct.Q5_0.gguf"),
+    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF", "Phi-3-mini-128k-instruct.Q5_1.gguf"),
+    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF", "Phi-3-mini-128k-instruct.Q5_K_M.gguf"),
+    ("QuantFactory/Phi-3-mini-128k-instruct-GGUF", "Phi-3-mini-128k-instruct.Q6_K.gguf"),
 )
 
-DEFAULT_SUMMARY_MODEL = ("QuantFactory/Phi-3-mini-128k-instruct-GGUF","Phi-3-mini-128k-instruct.Q8_0.gguf")
+DEFAULT_SUMMARY_MODEL = ("QuantFactory/Phi-3-mini-4k-instruct-GGUF", "Phi-3-mini-4k-instruct.Q5_0.gguf")
 SUMMARY_MODEL_PATH = os.path.join(BASE_MODEL_DIRECTORY, DEFAULT_SUMMARY_MODEL[0])
