@@ -41,11 +41,11 @@ The core functionality revolves around processing meeting recordings submitted v
 
 Data Preparation for LLM Loop:
 
-<img src="static/images/MoM Data Preparation Flow.png" alt="Data Preparation Loop Flow Diagram" />
+<img src="static/images/github/MoM Data Preparation Flow.png" alt="Data Preparation Loop Flow Diagram" />
 
 
 
-<img src="static/images/LLM MOM Approach Diagram.png" height="500px" alt="Approach Diagram" />
+<img src="static/images/github/LLM MOM Approach Diagram.png" height="500px" alt="Approach Diagram" />
 
 
 
@@ -81,18 +81,45 @@ Data Preparation for LLM Loop:
 
 ## Sample Screenshots of Application:
 
-1. Home screen that also your to choose your input meeting audio/video file and which model to use for generating MoM.
+1. Home Screen.
 
-<img src="static/images/1.png" alt="Screenshot 1" />
+<img src="static/images/github/1.png" alt="Screenshot 1" />
 
-2. While the MoM is being generated, a status is dynamically displayed and updated every 5 seconds in background.
+2. New Minutes of Meeting Dialogue
 
-<img src="static/images/2.png" alt="Screenshot 2" />
+<img src="static/images/github/2.png" alt="Screenshot 2" />
 
-3. Once the MoM is completed, it is dynamically displayed and can be edited by you.
+3. Upload Video/Audio File.
 
-<img src="static/images/3.png" alt="Screenshot 3" />
+<img src="static/images/github/3.png" alt="Screenshot 3" />
 
+4. Notification Center - Started Processing
+
+<img src="static/images/github/4.png" alt="Screenshot 4" />
+
+5. Notification Center - In Prgress Real Time Updates
+
+<img src="static/images/github/5.png" alt="Screenshot 5" />
+
+6. Notification Center - Completed Processing
+
+<img src="static/images/github/6.png" alt="Screenshot 6" />
+
+7. Final Minutes of Meeting Page
+
+<img src="static/images/github/7.png" alt="Screenshot 7" />
+
+8. Notification Center - Multiple File Status
+
+<img src="static/images/github/8.png" alt="Screenshot 8" />
+
+9. Notification Center - Multiple File Status
+
+<img src="static/images/github/9.png" alt="Screenshot 9" />
+
+10. Notification Center - Multiple File Status
+
+<img src="static/images/github/10.png" alt="Screenshot 10" />
 
 
 ## Running the Tool Locally: :slot_machine: 
