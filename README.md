@@ -29,7 +29,144 @@ The long term objective for this repository is also to develop a real time pytho
 
 
 
-## Features: :sparkles: 
+## 1. Setup and Installation
+
+Before proceeding, ensure you have the following installed:
+
+- Ubuntu 22.04 or latest.
+- Python (v3.10 or higher)
+- A virtual environment tool like `virtualenv` or `venv`.
+
+Let's begin installation steps now.
+
+1. **Clone the GitHub Repository**
+
+   Open your terminal or command prompt and navigate to the directory where you want to clone the repository. Then run:
+
+   ```bash
+   git clone https://github.com/inboxpraveen/LLM-Minutes-of-Meeting
+   cd LLM-Minutes-of-Meeting
+   ```
+
+2. **Install Requirements**
+
+   It's a good practice to create a virtual environment before installing dependencies to avoid potential conflicts with other Python projects. If you're using `virtualenv`, you can set up a new environment as follows:
+
+   ```bash
+   ## Create a python virtual environment and activate it.
+   # Install the required packages after activating:
+   pip install -r requirements.txt
+   
+   ## After this, let's install Llama-Cpp-Python binding which will be used to interact with LLMs. 
+   
+   ## Run the following line if you are using it on a CPU.
+   pip install llama-cpp-python
+   
+   ## Run the following line if you are using GPU (T4, A100, A10, or H100), or any Nvidia Cuda based GPU Drivers.
+   CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python
+   
+   ## If you are on Mac or any other GPU types, you can refer the following links and setup the Llama-Cpp-Python
+   
+   https://llama-cpp-python.readthedocs.io/en/stable/#installation-configuration
+   
+   https://llama-cpp-python.readthedocs.io/en/stable/install/macos/
+   ```
+
+3. **Setup RabbitMQ & Celery Background Job Processing**
+
+   Use the following link to setup RabbitMQ on your machine. Follow the directions till ***step 5*** and save your `admin-username` & `password`.
+
+   [Setup RabbitMQ on Ubuntu 22.04](https://www.cherryservers.com/blog/how-to-install-and-start-using-rabbitmq-on-ubuntu-22-04)
+
+   Once you have successfully setup RabbitMQ, then setup redis-server and celery. Use the following command to setup and install them.
+
+   ```bash
+   sudo apt-get update -y
+   ## Try with apt-get. If it does not install, then run with apt. 
+   sudo apt-get install redis-server -y 
+   ## If the above does not work, try this:
+   sudo apt install redis-server -y
+   ```
+
+4. **Run Application and Parallel Run Celery Task**
+
+First, start the Flask application:
+
+```bash
+cd /path/to/project/
+```
+
+and then open app.py file inside you code editor and modify the following line. 
+
+```python
+Line 18:     broker='amqp://<user>:<password>$@localhost:5672//'
+
+## Update <user> with "your-admin-username".
+## Update <password> with "your-admin-password"
+## Eg: broker='amqp://admin:hello_world$@localhost:5672//'
+
+### IMPORTANT NOTE: If your password contains '@' symbol, you will need to convert it because it is the default delimiter in broker settings. Example if your password has @ symbol inside it would be. 
+## broker='amqp://admin:hello%40world$@localhost:5672//'  -- where the original password was "hello@world", we represent it as 'hello%40world'
+```
+
+After you have updated the file, you will run the `setup.py` file to setup directories and download of models. If you want to change the configurations of which models you wish to use, you can change them appropriately based on your infrastructure size and system capacity. The following table shows which models we support currently in this project but we will be adding new LLMs support as we see them fit and open-source.
+
+<u>**Speech Models Supported**</u>
+
+| Model Name                      | Model Size | Memory Required (RAM or vRAM) |
+| ------------------------------- | ---------- | ----------------------------- |
+| distil-whisper/distil-large-v3  | 3.1 GB     | 4 GB                          |
+| distil-whisper/distil-large-v2  | 3.1 GB     | 4 GB                          |
+| distil-whisper/distil-medium.en | 1.6 GB     | 2 GB                          |
+| distil-whisper/distil-small.en  | 680 MB     | 900 MB                        |
+| openai/whisper-large-v3         | 6.2 GB     | 7.5 GB                        |
+| openai/whisper-large-v2         | 6.2 GB     | 7.5 GB                        |
+| openai/whisper-large-v1         | 6.2 GB     | 7.5 GB                        |
+| openai/whisper-medium           | 3.2 GB     | 4.5 GB                        |
+| openai/whisper-small (default)  | 980 MB     | 1.7 GB                        |
+
+**<u>LLMs Supported</u>**
+
+| Model Name                                         | Model Size   | Memory Required |
+| -------------------------------------------------- | ------------ | --------------- |
+| QuantFactory/Phi-3-mini-4k-instruct-GGUF (default) | 1 GB - 8 GB  | 2 GB - 14 GB    |
+| QuantFactory/Phi-3-mini-128k-instruct-GGUF         | 1 GB - 8 GB  | 2.5 GB - 16 GB  |
+| bartowski/Phi-3-medium-128k-instruct-GGUF          | 3 GB - 14 GB | 6 GB - 18 GB    |
+
+You will need to modify the `global_varibables.py` file with the model name you choose and then run `setup.py` file which will automatically down the models you choose.
+
+```python
+Line 32: DEFAULT_SPEECH_MODEL = "openai/whisper-small"
+...
+Line 46: DEFAULT_SUMMARY_MODEL = ("QuantFactory/Phi-3-mini-4k-instruct-GGUF", "Phi-3-mini-4k-instruct.Q5_0.gguf")
+
+
+### After update the above lines as per your need, run the setup.py
+python setup.py
+```
+
+In a new terminal window (ensure your virtual environment is activated here as well), start the App and Celery worker:
+
+```bash
+python app.py # ensure your environment is activated
+
+# and then in new terminal, run the following.
+celery -A app.celery worker --loglevel=info -f celery.logs
+```
+
+1. **Upload Recording to Form**
+
+   Open your web browser and navigate to the Flask application's URL (usually `http://127.0.0.1:5000`). Use the interface to upload your meeting recording.
+
+2. **Get Latest Status and Wait for It to Complete**
+
+   After uploading the recording, you can check the status of the processing. This could be implemented as a status page or a progress bar in your application. Wait until the processing is complete.
+
+3. **See the Final Processed Minutes of Meeting (MoM)**
+
+   Once the processing is complete, the application should display the final minutes of the meeting. You can view, edit (if the feature is available), and save the MoM for your reference.
+
+## 2. Features: :sparkles: 
 
 - Effortlessly convert audio and video files to accurate text transcripts: These can also be used to summarise, generate action items, understanding work-flows, and resource planning. 
 
@@ -180,66 +317,6 @@ Before proceeding, ensure you have the following installed:
 - A virtual environment tool like `virtualenv` or `venv`.
 
 ### Installation and Setup:
-
-1. **Clone the GitHub Repository**
-
-   Open your terminal or command prompt and navigate to the directory where you want to clone the repository. Then run:
-
-   ```bash
-   git clone https://github.com/inboxpraveen/LLM-Minutes-of-Meeting
-   cd LLM-Minutes-of-Meeting
-   ```
-
-2. **Install Requirements**
-
-   It's a good practice to create a virtual environment before installing dependencies to avoid potential conflicts with other Python projects. If you're using `virtualenv`, you can set up a new environment as follows:
-
-   ```bash
-   ## Create a python virtual environment and activate it.
-   
-   # Install the required packages after activating:
-   pip install -r requirements.txt
-   ```
-
-3. **Setup RabbitMQ & Celery Background Job Processing**
-
-   Use the following link to setup RabbitMQ on your machine. Follow the directions till ***step 5*** and save your `admin-username` & `password`.
-
-   [Setup RabbitMQ on Ubuntu 22.04](https://www.cherryservers.com/blog/how-to-install-and-start-using-rabbitmq-on-ubuntu-22-04)
-
-   Once you have successfully setup RabbitMQ, then setup redis-server and celery. Use the following command to setup and install them.
-
-
-
-
-
-4. **Run Application and Parallel Run Celery Task**
-
-First, start the Flask application:
-
-```bash
-export FLASK_APP=app.py  # For Unix or macOS
-set FLASK_APP=app.py  # For Windows
-flask run
-```
-
-In a new terminal window (ensure your virtual environment is activated here as well), start the Celery worker:
-
-```bash
-celery -A app.celery worker --loglevel=info -f celery.logs
-```
-
-1. **Upload Recording to Form**
-
-   Open your web browser and navigate to the Flask application's URL (usually `http://127.0.0.1:5000`). Use the interface to upload your meeting recording.
-
-2. **Get Latest Status and Wait for It to Complete**
-
-   After uploading the recording, you can check the status of the processing. This could be implemented as a status page or a progress bar in your application. Wait until the processing is complete.
-
-3. **See the Final Processed Minutes of Meeting (MoM)**
-
-   Once the processing is complete, the application should display the final minutes of the meeting. You can view, edit (if the feature is available), and save the MoM for your reference.
 
 
 
