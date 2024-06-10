@@ -23,7 +23,7 @@ The long term objective for this repository is also to develop a real time pytho
 
 ------
 
-**<u>For your Information</u>: I am working on fine-tuning custom LLMs and development. Please be patient while the whole project is completely stable. I will add training & inference code once completed. Do :star: This repository if you need to know latest updates.** :smile: **Appreciate your time.** 
+**<u>For your Information</u>: I am working on fine-tuning custom LLMs and development. Please be patient while the whole project is completely stable. I will add training & inference code once completed. Do :star: this repository if you need to know latest updates.** :smile: **Appreciate your time.** 
 
 ------
 
@@ -47,30 +47,61 @@ The long term objective for this repository is also to develop a real time pytho
 
 The core functionality revolves around processing meeting recordings submitted via the home page of the web application. Once a recording is submitted, a background task is initiated using Celery, which performs two primary operations: speech-to-text conversion and generating minutes of the meeting from the converted text.
 
-### Key Components
+### Implementation
 
-1. **Frontend Interface**: A user-friendly home page that allows users to upload their meeting recordings in various formats (audio or video).
-2. **Celery Task Queue**: Once a file is uploaded, a Celery task is triggered to handle the processing asynchronously, ensuring the web application remains responsive.
-3. **Speech-to-Text Conversion**: The first step in the Celery task is converting the speech in the recording to text. This process utilizes advanced speech recognition algorithms to accurately transcribe spoken words.
-4. **Text Processing with LLM**: After transcription, the text is processed using a large language model (LLM) to distill the content into minutes. This involves summarizing, identifying key points, and organizing the information in a structured format.
-5. **Result Delivery**: The final minutes of the meeting are sent back to the frontend, where they are displayed for the user to review, edit, and save.
+The flowchart you've shared outlines a detailed process for handling and processing media files, particularly focusing on audio and video inputs to generate transcriptions and summaries. Let’s break down each step and describe the high-level solutions involved in this workflow:
 
-Data Preparation for LLM Loop:
+##### 1. **Upload Media File**
+   - **Media Types**: Supports mp3, wav, mp4 files.
+   - **Action**: Users upload their media files to the system.
 
-<img src="static/images/github/MoM Data Preparation Flow.png" alt="Data Preparation Loop Flow Diagram" />
+##### 2. **Async Loop for Real-Time Notification**
+   - **Purpose**: To keep users informed about the status of their upload and processing.
+   - **Implementation**: Use an asynchronous notification API to send real-time updates to the user.
 
+##### 3. **Read Uploaded File**
+   - **Action**: The system reads the uploaded file to determine the type and content.
 
+##### 4. **Branching for Audio and Video**
+   - **Audio**:
+     - **Convert to 16 kHz**: Standardize audio sample rate for consistent processing.
+     - **Transcribe**: Convert audio speech to text.
+   - **Video**:
+     - **Extract Audio and Frames (1 Frame/Second)**: Separate audio track and video frames for processing.
+     - **Short Summary Per Frame**: Generate a brief summary for each extracted frame.
 
-<img src="static/images/github/LLM MOM Approach Diagram.png" height="500px" alt="Approach Diagram" />
+##### 5. **Join All Short Summary and Create Main Transcription (for Video)**
+   - **Action**: Combine all short summaries into a single comprehensive transcription of the video content.
+
+##### 6. **Split if Number of Token > 4000**
+   - **Purpose**: Handle limitations of the processing language model which might have a maximum token input limit.
+   - **Implementation**: If the transcription exceeds the token limit, split the content into manageable parts.
+
+##### 7. **Recursive MoM Language Model**
+   - **Generate Video MoM (Minutes of Meeting)**: If the input is a video, generate a detailed summary or minutes from the transcription.
+   - **Recursive Processing**: For longer content, recursively summarize to condense the information effectively.
+
+##### 8. **Generated Summary and MoM**
+   - **Action**: Produce a final summary and minutes of the meeting document based on the transcribed and processed text.
+
+##### 9. **Merge Both MoM and Get New MoM**
+   - **Purpose**: Combine summaries from different chunks (if split previously) into a final comprehensive document.
+
+##### 10. **Notification of Process Completion**
+   - **Integration with Notification API**: Inform the user that the processing is complete and provide access to the generated summaries or MoM documents.
+
+### Flow Diagram
+
+<img src="static/images/github/flow.png" alt="Data Preparation Loop Flow Diagram" />
 
 
 
 ## Technical Stack: :computer: 
 
-- **Backend**: Python, Flask
-- **Asynchronous Task Queue**: Celery
-- **Speech-to-Text**: Wav2vec2, Whisper, Faster-Whisper
-- **LLM for Text Processing**: LLM
+- **Back-end**: Python, Flask
+- **Asynchronous Task Queue**: Redis, Celery
+- **Speech-to-Text**: Whisper, Faster-Whisper, Distil-Whisper
+- **LLM for Text Processing**: Phi3, Gemma 2, Llama 3
 - **Frontend**: HTML, CSS, JavaScript
 
 
