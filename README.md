@@ -1,13 +1,29 @@
 # LLM-Minutes-of-Meeting
-<img src="static/images/MoM Tool Image.png" alt="Meeting Minutes AI Image" />
 
-The primary objective of this project is to showcase NLP & LLM's capability to quickly summarize long meetings and help you and your organization automate the task of delegating Minutes of Meeting(MoM) emails. It uses a high level 2 step approach where step 1 corresponds to convert any audio/video file into a text piece. Step 2 corresponds to using text produce by step 1 and generate Minutes of meeting. These minutes of meeting will be editable piece of text. Once you finalize the MoM, you can use it further as per your requirement. 
+### Table of Contents
 
-However, long term objective for this repository is also to develop a real time python web-application which can attend meetings for you and also provide you MoM at the end of the meeting. Taking baby steps and trying to get to long-term by starting a short term objective.
+| Sr. No. | Topic                                 | Link                    |
+| ------- | ------------------------------------- | ----------------------- |
+| 0.      | Introduction and "Why" of the project | [Link will come here]() |
+| 1.      | Setup and Installation                | [Link will come here]() |
+| 2.      | Features                              | [Another Link]()        |
+| 3.      | Demo and Application Screenshots      | [Another Link]()        |
+| 4.      | Approach and Implementation*          | [Another Link]()        |
+| 5.      | Recent Updates and Future Directions  | [Another Link]()        |
+| 6.      | Contributions                         | [Another Link]()        |
+| 7.      | Issues/Troubleshooting                | [Another Link]()        |
+
+## 0. Introduction and "Why" of the project
+
+<img src="static/images/github/mom.png" alt="Meeting Minutes AI Image" />
+
+The primary objective of this project is to showcase NLP & LLM's capability to quickly summarise long meetings and help you and your organisation automate the task of delegating Minutes of Meeting(MoM) emails. It uses a high level 2 step approach where step 1 corresponds to conversion of any audio/video file into a text conversation. Step 2 utilises text produced by step 1 and generate Minutes of meeting and detailed summary notes. These minutes of meeting will be editable piece of text. Once you finalise the MoM, you can use it further as per your requirement. 
+
+The long term objective for this repository is also to develop a real time python web-application which can attend meetings for you and also provide you MoM at the end of the meeting. Taking baby steps and trying to get to long-term by starting a short term objective.
 
 ------
 
-**<u>For your Information</u>: I am working on training a custom LLM. Please be patient while I train it. I will add training & inference code once completed. Do :star: This repository if you need to know latest updates.** :smile: **Appreciate your time.** 
+**<u>For your Information</u>: I am working on fine-tuning custom LLMs and development. Please be patient while the whole project is completely stable. I will add training & inference code once completed. Do :star: This repository if you need to know latest updates.** :smile: **Appreciate your time.** 
 
 ------
 
@@ -15,7 +31,7 @@ However, long term objective for this repository is also to develop a real time 
 
 ## Features: :sparkles: 
 
-- Effortlessly convert audio and video files to accurate text transcripts: These can also be used to summarize, generate action items, understanding work-flows, and resource planning. 
+- Effortlessly convert audio and video files to accurate text transcripts: These can also be used to summarise, generate action items, understanding work-flows, and resource planning. 
 
 - Keyword highlighting and topic tagging for quick reference: Extracting topics and finding relevant contents to skip through meetings and listen to only specific topics which is of your interest.
 
@@ -83,43 +99,43 @@ Data Preparation for LLM Loop:
 
 1. Home Screen.
 
-<img src="static/images/github/1.png" alt="Screenshot 1" />
+<img src="static/images/app/1.png" alt="Screenshot 1" />
 
 2. New Minutes of Meeting Dialogue
 
-<img src="static/images/github/2.png" alt="Screenshot 2" />
+<img src="static/images/app/2.png" alt="Screenshot 2" />
 
 3. Upload Video/Audio File.
 
-<img src="static/images/github/3.png" alt="Screenshot 3" />
+<img src="static/images/app/3.png" alt="Screenshot 3" />
 
 4. Notification Center - Started Processing
 
-<img src="static/images/github/4.png" alt="Screenshot 4" />
+<img src="static/images/app/4.png" alt="Screenshot 4" />
 
 5. Notification Center - In Prgress Real Time Updates
 
-<img src="static/images/github/5.png" alt="Screenshot 5" />
+<img src="static/images/app/5.png" alt="Screenshot 5" />
 
 6. Notification Center - Completed Processing
 
-<img src="static/images/github/6.png" alt="Screenshot 6" />
+<img src="static/images/app/6.png" alt="Screenshot 6" />
 
 7. Final Minutes of Meeting Page
 
-<img src="static/images/github/7.png" alt="Screenshot 7" />
+<img src="static/images/app/7.png" alt="Screenshot 7" />
 
 8. Notification Center - Multiple File Status
 
-<img src="static/images/github/8.png" alt="Screenshot 8" />
+<img src="static/images/app/8.png" alt="Screenshot 8" />
 
 9. Notification Center - Multiple File Status
 
-<img src="static/images/github/9.png" alt="Screenshot 9" />
+<img src="static/images/app/9.png" alt="Screenshot 9" />
 
 10. Notification Center - Multiple File Status
 
-<img src="static/images/github/10.png" alt="Screenshot 10" />
+<img src="static/images/app/10.png" alt="Screenshot 10" />
 
 
 ## Running the Tool Locally: :slot_machine: 
@@ -128,11 +144,9 @@ Data Preparation for LLM Loop:
 
 Before proceeding, ensure you have the following installed:
 
-- Python (version 3.6 or higher recommended)
-- Pip (Python package manager)
-- Git (for cloning the repository)
-- A suitable text editor or IDE (like Visual Studio Code, PyCharm, etc.)
-- [Optional but recommended] A virtual environment tool like `virtualenv`
+- Ubuntu 22.04 or latest.
+- Python (v3.10 or higher)
+- A virtual environment tool like `virtualenv` or `venv`.
 
 ### Installation and Setup:
 
@@ -150,39 +164,49 @@ Before proceeding, ensure you have the following installed:
    It's a good practice to create a virtual environment before installing dependencies to avoid potential conflicts with other Python projects. If you're using `virtualenv`, you can set up a new environment as follows:
 
    ```bash
-   virtualenv venv
-   source venv/bin/activate  # For Unix or macOS
-   venv\Scripts\activate  # For Windows
+   ## Create a python virtual environment and activate it.
    
-   # Install the required packages using:
+   # Install the required packages after activating:
    pip install -r requirements.txt
    ```
 
-3. **Run Application and Parallel Run Celery Task**
+3. **Setup RabbitMQ & Celery Background Job Processing**
 
-   First, start the Flask application:
+   Use the following link to setup RabbitMQ on your machine. Follow the directions till ***step 5*** and save your `admin-username` & `password`.
 
-   ```bash
-   export FLASK_APP=app.py  # For Unix or macOS
-   set FLASK_APP=app.py  # For Windows
-   flask run
-   ```
+   [Setup RabbitMQ on Ubuntu 22.04](https://www.cherryservers.com/blog/how-to-install-and-start-using-rabbitmq-on-ubuntu-22-04)
 
-   In a new terminal window (ensure your virtual environment is activated here as well), start the Celery worker:
+   Once you have successfully setup RabbitMQ, then setup redis-server and celery. Use the following command to setup and install them.
 
-   ```bash
-   celery -A app.celery worker --loglevel=info -f celery.logs
-   ```
 
-4. **Upload Recording to Form**
+
+
+
+4. **Run Application and Parallel Run Celery Task**
+
+First, start the Flask application:
+
+```bash
+export FLASK_APP=app.py  # For Unix or macOS
+set FLASK_APP=app.py  # For Windows
+flask run
+```
+
+In a new terminal window (ensure your virtual environment is activated here as well), start the Celery worker:
+
+```bash
+celery -A app.celery worker --loglevel=info -f celery.logs
+```
+
+1. **Upload Recording to Form**
 
    Open your web browser and navigate to the Flask application's URL (usually `http://127.0.0.1:5000`). Use the interface to upload your meeting recording.
 
-5. **Get Latest Status and Wait for It to Complete**
+2. **Get Latest Status and Wait for It to Complete**
 
    After uploading the recording, you can check the status of the processing. This could be implemented as a status page or a progress bar in your application. Wait until the processing is complete.
 
-6. **See the Final Processed Minutes of Meeting (MoM)**
+3. **See the Final Processed Minutes of Meeting (MoM)**
 
    Once the processing is complete, the application should display the final minutes of the meeting. You can view, edit (if the feature is available), and save the MoM for your reference.
 
