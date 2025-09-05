@@ -9,6 +9,8 @@ If you’re looking for a meeting recording API, consider checking out
 [Recall.ai](https://www.recall.ai/?utm_source=github&utm_medium=sponsorship&utm_campaign=inboxpraveen-LLM-Minutes-of-Meeting), 
 an API that records Zoom, Google Meet, Microsoft Teams, in-person meetings, and more.
 
+---
+
 ### Table of Contents
 
 | Sr. No. | Topic                                 | Link                    |
