@@ -1,0 +1,281 @@
+"""
+Speech Provider System Architecture
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SPEECH PROVIDER SYSTEM                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                                USER CODE
+                                    │
+                                    ▼
+        ┌───────────────────────────────────────────────────┐
+        │     Public API (providers.speech.__init__)        │
+        │                                                   │
+        │  • get_transcription()                           │
+        │  • get_transcription_async()                     │
+        │  • get_batch_transcriptions()                    │
+        │  • get_batch_transcriptions_async()              │
+        │  • SpeechTranscriptionRouter                     │
+        │  • list_available_providers()                    │
+        │  • get_provider_info()                           │
+        └───────────────────┬───────────────────────────────┘
+                            │
+                            ▼
+        ┌───────────────────────────────────────────────────┐
+        │    SpeechTranscriptionRouter (router.py)          │
+        │                                                   │
+        │  • Provider selection and instantiation          │
+        │  • Batch processing orchestration                │
+        │  • Async coordination                            │
+        │  • Configuration management                      │
+        └───────────────────┬───────────────────────────────┘
+                            │
+                            ▼
+        ┌───────────────────────────────────────────────────┐
+        │         BaseSpeechProvider (base.py)              │
+        │                                                   │
+        │  • Abstract interface                            │
+        │  • Concurrency control (semaphores)              │
+        │  • File validation                               │
+        │  • Config management                             │
+        │  • Sync/Async wrappers                           │
+        └───────────────────┬───────────────────────────────┘
+                            │
+                ┌───────────┴───────────────┐
+                │                           │
+                ▼                           ▼
+    ┌──────────────────────┐    ┌──────────────────────┐
+    │   API PROVIDERS      │    │   LOCAL PROVIDERS    │
+    │   (max_concurrent=5) │    │   (max_concurrent=1) │
+    ├──────────────────────┤    ├──────────────────────┤
+    │ • deepgram.py        │    │ • faster_whisper.py  │
+    │ • assemblyai.py      │    │ • parakeet.py        │
+    │ • togetherai.py      │    │                      │
+    │ • elevenlabs.py      │    │                      │
+    └──────────┬───────────┘    └──────────┬───────────┘
+               │                           │
+               ▼                           ▼
+    ┌──────────────────────┐    ┌──────────────────────┐
+    │  Cloud APIs          │    │  Local Models        │
+    │  - Parallel (5x)     │    │  - Sequential (1x)   │
+    │  - Requires API Key  │    │  - No API Key        │
+    │  - Fast              │    │  - Privacy           │
+    └──────────────────────┘    └──────────────────────┘
+
+
+        ┌───────────────────────────────────────────────────┐
+        │     SpeechConfig (config.py)                      │
+        │                                                   │
+        │  • Load from env.config file                     │
+        │  • Environment variable fallback                 │
+        │  • API key validation                            │
+        │  • Runtime configuration                         │
+        │  • Secure key masking                            │
+        └───────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+CONCURRENCY FLOW
+
+Single File:
+  User → Router → Provider.transcribe_with_semaphore() → Provider.transcribe_async()
+
+Batch Files:
+  User → Router.transcribe_batch_async()
+      ├→ Provider.transcribe_with_semaphore(file1) ─┐
+      ├→ Provider.transcribe_with_semaphore(file2) ─┼→ asyncio.gather()
+      ├→ Provider.transcribe_with_semaphore(file3) ─┤
+      └→ Provider.transcribe_with_semaphore(fileN) ─┘
+
+  Semaphore controls actual concurrency:
+    - API providers: Up to 5 concurrent
+    - Local providers: Sequential (1 at a time)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PROVIDER REGISTRY
+
+PROVIDER_REGISTRY = {
+    'deepgram': DeepgramProvider,
+    'assemblyai': AssemblyAIProvider,
+    'togetherai': TogetherAIProvider,
+    'elevenlabs': ElevenLabsProvider,
+    'faster_whisper': FasterWhisperProvider,
+    'parakeet': ParakeetProvider,
+}
+
+Dynamic provider loading:
+  provider_name → PROVIDER_REGISTRY[provider_name] → Provider class → Instance
+
+═══════════════════════════════════════════════════════════════════════════════
+
+CONFIGURATION CASCADE
+
+1. Provider Config (highest priority)
+   router = SpeechTranscriptionRouter('deepgram', config={'api_key': 'xxx'})
+
+2. Global Config (env.config file)
+   DEEPGRAM_API_KEY=xxx
+
+3. Environment Variables (fallback)
+   export DEEPGRAM_API_KEY=xxx
+
+4. Default Values (lowest priority)
+   Built-in defaults in each provider
+
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE STRUCTURE
+
+providers/speech/
+│
+├── Core Implementation
+│   ├── __init__.py              # Public API exports
+│   ├── base.py                  # Abstract base class (408 lines)
+│   ├── config.py                # Configuration management (179 lines)
+│   └── router.py                # Main orchestrator (296 lines)
+│
+├── API Providers
+│   ├── deepgram.py              # Deepgram implementation (113 lines)
+│   ├── assemblyai.py            # AssemblyAI implementation (118 lines)
+│   ├── togetherai.py            # Together AI implementation (106 lines)
+│   └── elevenlabs.py            # ElevenLabs implementation (131 lines)
+│
+├── Local Providers
+│   ├── faster_whisper.py        # Faster Whisper implementation (143 lines)
+│   └── parakeet.py              # Parakeet implementation (172 lines)
+│
+└── Documentation & Examples
+    ├── README.md                # Comprehensive guide
+    ├── QUICKSTART.md            # Quick reference
+    ├── IMPLEMENTATION_SUMMARY.md # Technical summary
+    ├── examples.py              # Usage examples
+    └── requirements.txt         # Dependencies
+
+═══════════════════════════════════════════════════════════════════════════════
+
+KEY DESIGN PATTERNS
+
+1. Abstract Factory Pattern
+   - SpeechTranscriptionRouter acts as factory
+   - Creates provider instances based on name
+   - Registry-based provider lookup
+
+2. Strategy Pattern
+   - BaseSpeechProvider defines interface
+   - Each provider implements strategy
+   - Runtime provider switching
+
+3. Singleton Pattern
+   - Global SpeechConfig instance
+   - Shared configuration across providers
+
+4. Template Method Pattern
+   - Base class provides algorithm structure
+   - Subclasses implement specific steps
+
+5. Semaphore Pattern
+   - Concurrency control per provider
+   - Automatic resource management
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ERROR HANDLING STRATEGY
+
+1. Configuration Errors
+   ✓ Warnings for missing API keys
+   ✓ Validation errors for invalid config
+   ✓ Helpful error messages with solutions
+
+2. File Errors
+   ✓ FileNotFoundError for missing files
+   ✓ ValueError for invalid file types
+   ✓ Pre-validation before processing
+
+3. Provider Errors
+   ✓ ImportError for missing SDKs
+   ✓ ValueError for API failures
+   ✓ Exception wrapping with context
+
+4. Batch Errors
+   ✓ Individual file error handling
+   ✓ Warning for failed files
+   ✓ Continue processing other files
+   ✓ Return empty string for failures
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TESTING STRATEGY
+
+Unit Tests (to be implemented):
+- Test each provider independently
+- Mock external API calls
+- Test configuration loading
+- Test error handling
+- Test concurrency control
+
+Integration Tests (to be implemented):
+- Test provider switching
+- Test batch processing
+- Test async operations
+- Test with real audio files
+
+Examples (implemented):
+- examples.py provides working demonstrations
+- 8 different usage scenarios
+- Error handling examples
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PERFORMANCE CHARACTERISTICS
+
+API Providers:
+  ✓ Fast (network dependent)
+  ✓ Parallel processing (5 concurrent)
+  ✓ No local resources needed
+  ✗ Requires internet
+  ✗ Costs per API call
+
+Local Providers:
+  ✓ Privacy (offline processing)
+  ✓ No per-use costs
+  ✓ No internet required
+  ✗ Sequential processing
+  ✗ Requires GPU for speed
+  ✗ Large model downloads
+
+═══════════════════════════════════════════════════════════════════════════════
+
+EXTENSIBILITY
+
+Adding a New Provider:
+
+1. Create provider file (e.g., new_provider.py)
+2. Inherit from BaseSpeechProvider
+3. Implement _validate_config() and transcribe_async()
+4. Register in PROVIDER_REGISTRY
+5. Add dependencies to requirements.txt
+6. Update documentation
+
+Example:
+```python
+class NewProvider(BaseSpeechProvider):
+    provider_name = "new_provider"
+    is_local = False
+    max_concurrent = 5
+    
+    def _validate_config(self):
+        # Validate config
+        pass
+    
+    async def transcribe_async(self, audio_path: str) -> str:
+        # Implement transcription
+        pass
+
+# Register
+PROVIDER_REGISTRY['new_provider'] = NewProvider
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+"""
+

@@ -1,0 +1,37 @@
+# Speech Provider Dependencies
+# ===========================
+
+# Core dependencies (required for all providers)
+torch>=2.0.0
+transformers>=4.30.0
+
+# API-based provider dependencies (optional - install only what you need)
+
+# Deepgram
+deepgram-sdk>=3.0.0
+
+# AssemblyAI
+assemblyai>=0.17.0
+
+# Together AI
+together>=0.2.0
+
+# ElevenLabs
+elevenlabs>=0.2.0
+requests>=2.28.0
+
+# Local model dependencies (optional)
+
+# Faster Whisper
+faster-whisper>=0.9.0
+
+# Parakeet - Option 1: Using transformers (recommended)
+# Already included above: transformers>=4.30.0
+
+# Parakeet - Option 2: Using NeMo toolkit (alternative)
+# nemo_toolkit[asr]>=1.20.0
+# Note: NeMo has many dependencies, install only if needed
+
+# Additional utilities
+asyncio>=3.4.3
+
