@@ -1,0 +1,25 @@
+# LLM Provider Dependencies
+# =========================
+
+# Core dependencies (required)
+asyncio>=3.4.3
+
+# API-based provider dependencies (optional - install only what you need)
+
+# OpenAI
+openai>=1.0.0
+
+# Google Gemini
+google-generativeai>=0.3.0
+
+# Grok (xAI) - uses OpenAI SDK
+# Already included above: openai>=1.0.0
+
+# Local model dependencies (optional)
+
+# Ollama
+ollama>=0.1.0
+
+# Additional utilities
+typing-extensions>=4.0.0
+
