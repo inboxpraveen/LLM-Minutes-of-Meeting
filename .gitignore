@@ -16,7 +16,9 @@ ENV/
 
 # Environment & secrets
 .env
+.env.*
 *.env
+!.env.example
 
 # Database
 instance/
