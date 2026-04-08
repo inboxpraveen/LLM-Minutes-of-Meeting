@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Upload Meeting{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Upload Meeting</h1>
+    <p class="text-sm text-gray-500 mt-1">Upload an audio or video recording to generate AI-powered minutes of meeting.</p>
+  </div>
+
+  <div class="card p-8">
+    <form method="POST" action="{{ url_for('meetings.upload') }}"
+          enctype="multipart/form-data" id="upload-form" x-data="uploadForm()">
+
+      <!-- Title -->
+      <div class="mb-6">
+        <label for="title" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Meeting Title <span class="text-gray-400">(optional)</span>
+        </label>
+        <input type="text" id="title" name="title"
+               class="input-field" placeholder="e.g. Q4 Product Planning — Dec 2025" />
+        <p class="text-xs text-gray-400 mt-1">Leave blank to use the filename as the title.</p>
+      </div>
+
+      <!-- Drop zone -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Recording File</label>
+        <div
+          class="relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer"
+          :class="dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300 bg-gray-50'"
+          @dragover.prevent="dragging = true"
+          @dragleave.prevent="dragging = false"
+          @drop.prevent="handleDrop($event)"
+          @click="$refs.fileInput.click()">
+
+          <input type="file" name="file" id="file-input" ref="fileInput" class="hidden"
+                 accept=".mp4,.mp3,.wav,.m4a,.webm,.ogg,.mkv"
+                 @change="handleFileSelect($event)" />
+
+          <div x-show="!selectedFile" class="space-y-3">
+            <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+              <svg class="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-gray-700">Drop your file here or click to browse</p>
+              <p class="text-xs text-gray-400 mt-1">Supported: MP4, MP3, WAV, M4A, WebM, OGG, MKV</p>
+            </div>
+          </div>
+
+          <div x-show="selectedFile" class="space-y-2">
+            <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-gray-900" x-text="selectedFile?.name"></p>
+            <p class="text-xs text-gray-500" x-text="formatFileSize(selectedFile?.size)"></p>
+            <button type="button" @click.stop="clearFile()"
+                    class="text-xs text-red-500 hover:text-red-700 mt-1">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info box -->
+      <div class="bg-blue-50 rounded-xl p-4 mb-6 flex gap-3">
+        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="text-sm text-blue-700">
+          <p class="font-medium">Processing happens in the background</p>
+          <p class="mt-0.5 text-blue-600">After uploading, transcription and summary generation will run automatically. You can track progress on the meeting detail page.</p>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="flex gap-3">
+        <button type="submit" id="submit-btn" class="btn-primary flex-1" :disabled="!selectedFile || uploading"
+                :class="(!selectedFile || uploading) ? 'opacity-60 cursor-not-allowed' : ''">
+          <span x-show="!uploading" class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Upload & Process
+          </span>
+          <span x-show="uploading" class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Uploading…
+          </span>
+        </button>
+        <a href="{{ url_for('meetings.list_meetings') }}" class="btn-secondary">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

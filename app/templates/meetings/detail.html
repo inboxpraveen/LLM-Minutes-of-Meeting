@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}{{ meeting.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 text-sm text-gray-400 mb-6">
+    <a href="{{ url_for('meetings.list_meetings') }}" class="hover:text-gray-600">Meetings</a>
+    <span>/</span>
+    <span class="text-gray-700 truncate max-w-xs">{{ meeting.title }}</span>
+  </nav>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">{{ meeting.title }}</h1>
+      <p class="text-sm text-gray-400 mt-1">
+        {{ meeting.original_filename }}
+        {% if meeting.file_size %} · {{ (meeting.file_size / 1048576) | round(1) }} MB{% endif %}
+        {% if meeting.created_at %} · {{ meeting.created_at.strftime('%B %d, %Y at %H:%M') }}{% endif %}
+      </p>
+    </div>
+    <div class="flex items-center gap-3 flex-shrink-0">
+      <span class="status-badge status-{{ meeting.status }} text-sm px-3 py-1.5" id="detail-status">
+        {% if meeting.status in ['processing','transcribing','summarizing'] %}
+          <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        {% endif %}
+        <span id="status-label">{{ meeting.status | capitalize }}</span>
+      </span>
+      <form method="POST" action="{{ url_for('meetings.delete', meeting_id=meeting.id) }}"
+            onsubmit="return confirm('Delete this meeting permanently?')">
+        <button type="submit"
+          class="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+          Delete
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Processing progress (shown when not completed/failed) -->
+  {% if meeting.status not in ['completed', 'failed'] %}
+  <div id="progress-section" class="card p-6 mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-medium text-gray-700" id="progress-label">
+        {{ meeting.status | capitalize }}…
+      </span>
+      <span class="text-sm text-gray-500" id="progress-pct">{{ meeting.progress }}%</span>
+    </div>
+    <div class="w-full bg-gray-100 rounded-full h-2">
+      <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+           style="width: {{ meeting.progress }}%"
+           id="progress-bar"></div>
+    </div>
+    <p class="text-xs text-gray-400 mt-3">
+      This page will update automatically. Transcription typically takes 1–3 minutes.
+    </p>
+  </div>
+  {% endif %}
+
+  <!-- Error message -->
+  {% if meeting.status == 'failed' and meeting.error_message %}
+  <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+    <div class="flex gap-3">
+      <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-red-700">Processing failed</p>
+        <p class="text-sm text-red-600 mt-1">{{ meeting.error_message }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Results (tabs) -->
+  {% if meeting.status == 'completed' %}
+  <div x-data="{ tab: 'minutes' }" class="card overflow-hidden">
+    <!-- Tab headers -->
+    <div class="flex border-b border-gray-100">
+      <button @click="tab = 'minutes'"
+              :class="tab === 'minutes' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              class="flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-colors text-center">
+        Minutes of Meeting
+      </button>
+      <button @click="tab = 'transcript'"
+              :class="tab === 'transcript' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              class="flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-colors text-center">
+        Full Transcript
+      </button>
+    </div>
+
+    <!-- Minutes tab -->
+    <div x-show="tab === 'minutes'" class="p-6 lg:p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-900">Minutes of Meeting</h3>
+        <button onclick="copyToClipboard('minutes-content')"
+                class="btn-secondary text-xs gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div id="minutes-content" class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+        {% if meeting.minutes_of_meeting %}
+          {{ meeting.minutes_of_meeting | safe }}
+        {% else %}
+          <p class="text-gray-400 italic">No minutes generated.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Transcript tab -->
+    <div x-show="tab === 'transcript'" class="p-6 lg:p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-900">Full Transcript</h3>
+        <button onclick="copyToClipboard('transcript-content')"
+                class="btn-secondary text-xs gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy
+        </button>
+      </div>
+      <div id="transcript-content"
+           class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-xl p-4 max-h-[600px] overflow-y-auto font-mono">
+        {{ meeting.transcript or 'No transcript available.' }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Auto-refresh progress for non-terminal states
+  const meetingId = {{ meeting.id }};
+  const currentStatus = '{{ meeting.status }}';
+  const terminalStates = ['completed', 'failed'];
+
+  if (!terminalStates.includes(currentStatus)) {
+    const interval = setInterval(async () => {
+      try {
+        const resp = await fetch(`/api/v1/meetings/${meetingId}/status`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        // Update progress bar
+        const bar = document.getElementById('progress-bar');
+        const pct = document.getElementById('progress-pct');
+        const lbl = document.getElementById('progress-label');
+        if (bar) bar.style.width = data.progress + '%';
+        if (pct) pct.textContent = data.progress + '%';
+        if (lbl) lbl.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1) + '…';
+
+        // Update status badge
+        const statusLabel = document.getElementById('status-label');
+        if (statusLabel) statusLabel.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+
+        if (terminalStates.includes(data.status)) {
+          clearInterval(interval);
+          // Reload to show results
+          setTimeout(() => window.location.reload(), 800);
+        }
+      } catch (e) { /* ignore */ }
+    }, 3000);
+  }
+</script>
+{% endblock %}

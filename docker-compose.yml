@@ -1,0 +1,66 @@
+services:
+
+  # ── Redis (broker + result backend) ──────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Flask web application ─────────────────────────────────────────────
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    env_file: .env
+    volumes:
+      - uploads_data:/app/data/uploads
+      - db_data:/app/instance
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Celery worker ─────────────────────────────────────────────────────
+  celery:
+    build: .
+    restart: unless-stopped
+    command: celery -A celery_worker:celery worker -l info -c 4
+    env_file: .env
+    volumes:
+      - uploads_data:/app/data/uploads
+      - db_data:/app/instance
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ── Celery beat (periodic tasks — cleanup etc.) ───────────────────────
+  celery-beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A celery_worker:celery beat -l info --scheduler celery.beat:PersistentScheduler
+    env_file: .env
+    volumes:
+      - uploads_data:/app/data/uploads
+      - db_data:/app/instance
+      - beat_data:/app/celerybeat
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis_data:
+  uploads_data:
+  db_data:
+  beat_data:

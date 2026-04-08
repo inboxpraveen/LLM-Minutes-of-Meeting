@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+
+  <!-- Page header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <p class="text-sm text-gray-500 mt-1">Overview of your meeting processing activity</p>
+    </div>
+    <a href="{{ url_for('meetings.upload') }}" class="btn-primary self-start sm:self-auto">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 4v16m8-8H4" />
+      </svg>
+      New Meeting
+    </a>
+  </div>
+
+  <!-- Stats grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-gray-500">Total Meetings</span>
+        <div class="w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ stats.total }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-gray-500">Completed</span>
+        <div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ stats.completed }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-gray-500">Processing</span>
+        <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ stats.processing }}</p>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-medium text-gray-500">Failed</span>
+        <div class="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <p class="text-3xl font-bold text-gray-900">{{ stats.failed }}</p>
+    </div>
+  </div>
+
+  <!-- Recent meetings -->
+  <div class="card">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-base font-semibold text-gray-900">Recent Meetings</h2>
+      <a href="{{ url_for('meetings.list_meetings') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+        View all →
+      </a>
+    </div>
+
+    {% if recent %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="th-cell">Title</th>
+            <th class="th-cell hidden sm:table-cell">Uploaded</th>
+            <th class="th-cell hidden md:table-cell">Expires</th>
+            <th class="th-cell">Status</th>
+            <th class="th-cell text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for m in recent %}
+          <tr class="hover:bg-gray-50/50 transition-colors">
+            <td class="td-cell">
+              <span class="font-medium text-gray-900 truncate block max-w-[200px]">{{ m.title }}</span>
+              <span class="text-xs text-gray-400">{{ m.original_filename }}</span>
+            </td>
+            <td class="td-cell hidden sm:table-cell text-gray-500">
+              {{ m.created_at.strftime('%b %d, %Y') if m.created_at else '—' }}
+            </td>
+            <td class="td-cell hidden md:table-cell text-gray-500">
+              {% if m.expires_at %}
+                {{ m.expires_at.strftime('%b %d, %Y') }}
+              {% else %}—{% endif %}
+            </td>
+            <td class="td-cell">
+              <span class="status-badge status-{{ m.status }}">
+                {% if m.status in ['processing','transcribing','summarizing'] %}
+                  <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                {% endif %}
+                {{ m.status | capitalize }}
+              </span>
+            </td>
+            <td class="td-cell text-right">
+              <a href="{{ url_for('meetings.detail', meeting_id=m.id) }}"
+                 class="text-indigo-600 hover:text-indigo-800 font-medium">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="py-16 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <p class="text-gray-500 font-medium">No meetings yet</p>
+      <p class="text-sm text-gray-400 mt-1">Upload your first meeting recording to get started.</p>
+      <a href="{{ url_for('meetings.upload') }}" class="btn-primary mt-4 inline-flex">
+        Upload a Meeting
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

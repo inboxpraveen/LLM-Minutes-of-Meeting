@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Admin Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+    <p class="text-sm text-gray-500 mt-1">Configure AI providers, storage, and application behaviour.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div x-data="{ tab: '{{ active_tab }}' }">
+    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto gap-0">
+      {% for slug, label in [('llm','LLM Provider'),('speech','Speech Provider'),('storage','Storage & Retention')] %}
+      <button @click="tab = '{{ slug }}'"
+              :class="tab === '{{ slug }}' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+              class="whitespace-nowrap py-3 px-5 text-sm font-medium border-b-2 transition-colors">
+        {{ label }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- LLM Tab -->
+    <div x-show="tab === 'llm'">
+      <div class="card p-6 lg:p-8">
+        <h2 class="text-base font-semibold text-gray-900 mb-1">LLM Provider</h2>
+        <p class="text-sm text-gray-500 mb-6">
+          Supports any OpenAI-compatible endpoint — OpenAI, OpenRouter, Groq, Together AI, Azure OpenAI, etc.
+        </p>
+
+        <form method="POST" action="{{ url_for('admin.settings', tab='llm') }}" class="space-y-5">
+          <input type="hidden" name="tab" value="llm" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Base URL</label>
+            <input type="url" name="llm_base_url"
+                   value="{{ config.get('llm_base_url').value if config.get('llm_base_url') else '' }}"
+                   class="input-field" placeholder="https://api.openai.com/v1" required />
+            <p class="text-xs text-gray-400 mt-1">Examples: <code>https://openrouter.ai/api/v1</code>, <code>https://api.groq.com/openai/v1</code></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">API Key</label>
+            <input type="password" name="llm_api_key"
+                   value="{% if config.get('llm_api_key') and config.get('llm_api_key').value %}••••••••{% endif %}"
+                   class="input-field font-mono" placeholder="sk-…" autocomplete="off" />
+            <p class="text-xs text-gray-400 mt-1">Leave as-is to keep existing key. Enter a new value to update.</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Model Name</label>
+            <input type="text" name="llm_model"
+                   value="{{ config.get('llm_model').value if config.get('llm_model') else 'gpt-4o-mini' }}"
+                   class="input-field font-mono" placeholder="gpt-4o-mini" required />
+            <p class="text-xs text-gray-400 mt-1">
+              Examples: <code>gpt-4o</code>, <code>anthropic/claude-opus-4</code>, <code>llama-3.3-70b-versatile</code>
+            </p>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="btn-primary">Save LLM Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Speech Tab -->
+    <div x-show="tab === 'speech'">
+      <div class="card p-6 lg:p-8">
+        <h2 class="text-base font-semibold text-gray-900 mb-1">Speech Provider</h2>
+        <p class="text-sm text-gray-500 mb-6">Choose which provider handles audio transcription.</p>
+
+        <form method="POST" action="{{ url_for('admin.settings', tab='speech') }}" class="space-y-5">
+          <input type="hidden" name="tab" value="speech" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Active Provider</label>
+            <select name="speech_provider" class="input-field">
+              {% for val, label in [('deepgram','Deepgram'),('assemblyai','AssemblyAI'),('sarvam','Sarvam AI'),('elevenlabs','ElevenLabs')] %}
+              <option value="{{ val }}" {% if config.get('speech_provider') and config.get('speech_provider').value == val %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {% for provider, label in [('deepgram','Deepgram'),('assemblyai','AssemblyAI'),('sarvam','Sarvam AI'),('elevenlabs','ElevenLabs')] %}
+          <div class="bg-gray-50 rounded-xl p-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">{{ label }} API Key</label>
+            <input type="password" name="{{ provider }}_api_key"
+                   value="{% if config.get(provider + '_api_key') and config.get(provider + '_api_key').value %}••••••••{% endif %}"
+                   class="input-field font-mono" placeholder="API key for {{ label }}" autocomplete="off" />
+          </div>
+          {% endfor %}
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="btn-primary">Save Speech Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Storage Tab -->
+    <div x-show="tab === 'storage'">
+      <div class="card p-6 lg:p-8">
+        <h2 class="text-base font-semibold text-gray-900 mb-1">Storage & Retention</h2>
+        <p class="text-sm text-gray-500 mb-6">
+          Control how long uploaded files are kept before automatic deletion.
+        </p>
+
+        <form method="POST" action="{{ url_for('admin.settings', tab='storage') }}" class="space-y-5">
+          <input type="hidden" name="tab" value="storage" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+              Retention Period <span class="text-gray-400">(days)</span>
+            </label>
+            <div class="flex items-center gap-3">
+              <input type="number" name="meeting_retention_days" min="1" max="3650"
+                     value="{{ config.get('meeting_retention_days').value if config.get('meeting_retention_days') else '30' }}"
+                     class="input-field w-32" />
+              <span class="text-sm text-gray-500">days after upload</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Uploaded audio/video files are auto-deleted after this many days. Transcript and minutes are kept.
+              Set to a large number (e.g. 3650) to effectively never delete.
+            </p>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p class="text-sm text-amber-700">
+                The cleanup job runs every hour. Existing meetings will have their expiry updated when you change this setting.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="btn-primary">Save Storage Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

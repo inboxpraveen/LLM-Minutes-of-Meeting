@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Meetings{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Meetings</h1>
+      <p class="text-sm text-gray-500 mt-1">All your uploaded meeting recordings</p>
+    </div>
+    <a href="{{ url_for('meetings.upload') }}" class="btn-primary self-start sm:self-auto">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Upload Meeting
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-6 px-6 py-4 flex flex-wrap gap-2">
+    {% set statuses = [('', 'All'), ('pending', 'Pending'), ('processing', 'Processing'),
+                       ('completed', 'Completed'), ('failed', 'Failed')] %}
+    {% for val, label in statuses %}
+    <a href="{{ url_for('meetings.list_meetings', status=val) }}"
+       class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+              {% if status_filter == val %}bg-indigo-600 text-white
+              {% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Table -->
+  <div class="card overflow-hidden">
+    {% if meetings.items %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="th-cell">Title</th>
+            <th class="th-cell hidden sm:table-cell">Size</th>
+            <th class="th-cell hidden md:table-cell">Uploaded</th>
+            <th class="th-cell hidden lg:table-cell">Expires</th>
+            <th class="th-cell">Status</th>
+            <th class="th-cell text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for m in meetings.items %}
+          <tr class="hover:bg-gray-50/50 transition-colors" id="row-{{ m.id }}">
+            <td class="td-cell">
+              <a href="{{ url_for('meetings.detail', meeting_id=m.id) }}"
+                 class="font-medium text-gray-900 hover:text-indigo-600 transition-colors truncate block max-w-[180px] sm:max-w-xs">
+                {{ m.title }}
+              </a>
+              <span class="text-xs text-gray-400 truncate block max-w-[180px]">{{ m.original_filename }}</span>
+            </td>
+            <td class="td-cell hidden sm:table-cell text-gray-500">
+              {% if m.file_size %}{{ (m.file_size / 1048576) | round(1) }} MB{% else %}—{% endif %}
+            </td>
+            <td class="td-cell hidden md:table-cell text-gray-500">
+              {{ m.created_at.strftime('%b %d, %Y') if m.created_at else '—' }}
+            </td>
+            <td class="td-cell hidden lg:table-cell text-gray-500">
+              {% if m.expires_at %}{{ m.expires_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}
+            </td>
+            <td class="td-cell">
+              <span class="status-badge status-{{ m.status }}" id="status-{{ m.id }}">
+                {% if m.status in ['processing','transcribing','summarizing'] %}
+                  <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                {% endif %}
+                <span class="label-{{ m.id }}">{{ m.status | capitalize }}</span>
+              </span>
+            </td>
+            <td class="td-cell text-right">
+              <div class="flex items-center justify-end gap-2">
+                <a href="{{ url_for('meetings.detail', meeting_id=m.id) }}"
+                   class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">View</a>
+                <form method="POST" action="{{ url_for('meetings.delete', meeting_id=m.id) }}"
+                      onsubmit="return confirm('Delete this meeting? This cannot be undone.')">
+                  <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-xs">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if meetings.pages > 1 %}
+    <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+      <p class="text-sm text-gray-500">
+        Page {{ meetings.page }} of {{ meetings.pages }}
+        ({{ meetings.total }} total)
+      </p>
+      <div class="flex gap-2">
+        {% if meetings.has_prev %}
+        <a href="{{ url_for('meetings.list_meetings', page=meetings.prev_num, status=status_filter) }}"
+           class="btn-secondary text-xs">← Prev</a>
+        {% endif %}
+        {% if meetings.has_next %}
+        <a href="{{ url_for('meetings.list_meetings', page=meetings.next_num, status=status_filter) }}"
+           class="btn-secondary text-xs">Next →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="py-20 text-center">
+      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      {% if status_filter %}
+        <p class="text-gray-500 font-medium">No {{ status_filter }} meetings</p>
+        <a href="{{ url_for('meetings.list_meetings') }}" class="text-indigo-600 text-sm mt-2 inline-block">View all</a>
+      {% else %}
+        <p class="text-gray-500 font-medium">No meetings yet</p>
+        <p class="text-sm text-gray-400 mt-1">Upload your first recording to get started.</p>
+        <a href="{{ url_for('meetings.upload') }}" class="btn-primary mt-4 inline-flex">Upload a Meeting</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Poll for status updates on processing meetings
+  const processingIds = [
+    {% for m in meetings.items %}
+      {% if m.status in ['pending','processing','transcribing','summarizing'] %}
+        {{ m.id }},
+      {% endif %}
+    {% endfor %}
+  ];
+  if (processingIds.length > 0) startPolling(processingIds);
+</script>
+{% endblock %}
