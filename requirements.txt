@@ -1,28 +1,29 @@
 # Web Framework
-Flask==3.1.0
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Werkzeug==3.1.3
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
 
 # Async Task Queue
-celery==5.4.0
-redis==5.2.1
+celery
+redis
 
 # Environment & Config
-python-dotenv==1.0.1
+python-dotenv
 
 # LLM Provider (OpenAI-compatible)
-openai==1.75.0
+openai
 
 # Speech Providers
-deepgram-sdk==3.10.1
-assemblyai==0.37.0
-elevenlabs==2.3.0
-httpx==0.28.1
+deepgram-sdk
+assemblyai
+elevenlabs
+sarvamai
+httpx
 
 # Audio Processing
-pydub==0.25.1
-ffmpeg-python==0.2.0
+pydub
+ffmpeg-python
 
 # Utilities
-markdown==3.7
+markdown

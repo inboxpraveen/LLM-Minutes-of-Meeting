@@ -113,13 +113,16 @@ The app uses the OpenAI client format — works with any compatible endpoint:
 
 ## Speech Providers
 
+All four providers produce **speaker-labelled transcripts** when diarization is available (e.g. `[Speaker 0]: …`, `[speaker_0]: …`). This gives the LLM enough context to correctly attribute decisions and action items in the Minutes of Meeting.
 
-| Provider       | Notes                                 |
-| -------------- | ------------------------------------- |
-| **Deepgram**   | Nova-3 model, fastest & most accurate |
-| **AssemblyAI** | High accuracy, speaker diarisation    |
-| **Sarvam AI**  | Best for Indian languages + English   |
-| **ElevenLabs** | Scribe v1 model                       |
+| Provider | Model | Key capabilities |
+|---|---|---|
+| **Deepgram** | Nova-3 | Fastest; word-level diarization via `utterances`; paragraph-formatted output |
+| **AssemblyAI** | Best (auto) | High accuracy; speaker diarization |
+| **Sarvam AI** | saarika:v2.5 | Batch Job API — no duration limit; best for Indian languages + English; diarization (beta) |
+| **ElevenLabs** | Scribe v2 | Multichannel support (stereo → per-channel speakers); single-channel diarization |
+
+> **Sarvam note:** The direct `/speech-to-text` endpoint only accepts ≤ 30 seconds of audio. The provider now uses the full Batch Job pipeline (`/speech-to-text/job/v1`) which handles meeting recordings of any length.
 
 
 ---
