@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}MoM AI{% endblock %} — Minutes of Meeting</title>
+  <title>{% block title %}MoM AI{% endblock %} | Minutes of Meeting</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -43,8 +44,8 @@
 
   <aside
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm flex flex-col
-           transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-auto">
+    class="fixed inset-y-0 left-0 z-40 w-64 h-screen max-h-screen bg-white border-r border-gray-100 shadow-sm flex flex-col
+           transition-transform duration-200 ease-in-out lg:translate-x-0">
 
     <!-- Logo -->
     <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
@@ -98,6 +99,14 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <span>Settings</span>
+      </a>
+      <a href="{{ url_for('admin.api_keys') }}"
+         class="nav-item {% if request.endpoint == 'admin.api_keys' %}active{% endif %}">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+        <span>API keys</span>
       </a>
       <a href="{{ url_for('admin.users') }}"
          class="nav-item {% if request.endpoint in ['admin.users', 'admin.create_user'] %}active{% endif %}">

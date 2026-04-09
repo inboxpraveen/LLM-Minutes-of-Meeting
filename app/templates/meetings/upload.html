@@ -2,7 +2,7 @@
 {% block title %}Upload Meeting{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl w-full">
 
   <!-- Header -->
   <div class="mb-8">
@@ -20,7 +20,7 @@
           Meeting Title <span class="text-gray-400">(optional)</span>
         </label>
         <input type="text" id="title" name="title"
-               class="input-field" placeholder="e.g. Q4 Product Planning — Dec 2025" />
+               class="input-field" placeholder="e.g. Q4 Product Planning, Dec 2025" />
         <p class="text-xs text-gray-400 mt-1">Leave blank to use the filename as the title.</p>
       </div>
 
@@ -35,7 +35,7 @@
           @drop.prevent="handleDrop($event)"
           @click="$refs.fileInput.click()">
 
-          <input type="file" name="file" id="file-input" ref="fileInput" class="hidden"
+          <input type="file" name="file" id="file-input" x-ref="fileInput" class="hidden"
                  accept=".mp4,.mp3,.wav,.m4a,.webm,.ogg,.mkv"
                  @change="handleFileSelect($event)" />
 
@@ -98,7 +98,12 @@
             Uploading…
           </span>
         </button>
-        <a href="{{ url_for('meetings.list_meetings') }}" class="btn-secondary">Cancel</a>
+        <a href="{{ url_for('meetings.list_meetings') }}" class="btn-secondary inline-flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Cancel
+        </a>
       </div>
 
     </form>

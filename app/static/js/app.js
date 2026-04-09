@@ -35,6 +35,12 @@ function uploadForm() {
         return;
       }
       this.selectedFile = file;
+      const input = this.$refs.fileInput;
+      if (input) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      }
       // Auto-fill title from filename
       const titleInput = document.getElementById('title');
       if (titleInput && !titleInput.value) {

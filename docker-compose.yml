@@ -19,6 +19,10 @@ services:
     ports:
       - "${APP_PORT:-5000}:5000"
     env_file: .env
+    # Use Compose service hostname — .env often has localhost for local dev, which breaks inside containers.
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - uploads_data:/app/data/uploads
       - db_data:/app/instance
@@ -38,6 +42,9 @@ services:
     restart: unless-stopped
     command: celery -A celery_worker:celery worker -l info -c 4
     env_file: .env
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - uploads_data:/app/data/uploads
       - db_data:/app/instance
@@ -51,6 +58,9 @@ services:
     restart: unless-stopped
     command: celery -A celery_worker:celery beat -l info --scheduler celery.beat:PersistentScheduler
     env_file: .env
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
     volumes:
       - uploads_data:/app/data/uploads
       - db_data:/app/instance

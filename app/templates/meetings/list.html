@@ -2,7 +2,7 @@
 {% block title %}Meetings{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
+<div class="max-w-7xl w-full">
 
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -80,10 +80,23 @@
             <td class="td-cell text-right">
               <div class="flex items-center justify-end gap-2">
                 <a href="{{ url_for('meetings.detail', meeting_id=m.id) }}"
-                   class="text-indigo-600 hover:text-indigo-800 font-medium text-xs">View</a>
+                   class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-xs">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View
+                </a>
                 <form method="POST" action="{{ url_for('meetings.delete', meeting_id=m.id) }}"
+                      class="inline-flex"
                       onsubmit="return confirm('Delete this meeting? This cannot be undone.')">
-                  <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-xs">Delete</button>
+                  <button type="submit" class="inline-flex items-center gap-1 text-red-500 hover:text-red-700 font-medium text-xs">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
                 </form>
               </div>
             </td>
@@ -103,11 +116,21 @@
       <div class="flex gap-2">
         {% if meetings.has_prev %}
         <a href="{{ url_for('meetings.list_meetings', page=meetings.prev_num, status=status_filter) }}"
-           class="btn-secondary text-xs">← Prev</a>
+           class="btn-secondary text-xs inline-flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Prev
+        </a>
         {% endif %}
         {% if meetings.has_next %}
         <a href="{{ url_for('meetings.list_meetings', page=meetings.next_num, status=status_filter) }}"
-           class="btn-secondary text-xs">Next →</a>
+           class="btn-secondary text-xs inline-flex items-center gap-1">
+          Next
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
         {% endif %}
       </div>
     </div>

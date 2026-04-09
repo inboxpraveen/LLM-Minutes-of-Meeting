@@ -1,7 +1,20 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# utf-8-sig strips a UTF-8 BOM if present (common when saving .env on Windows).
+load_dotenv(encoding="utf-8-sig")
+
+
+def _resolve_llm_base_url() -> tuple[str, str]:
+    """Return (base_url, api_key). OpenRouter keys (sk-or-v1-...) are invalid on api.openai.com."""
+    base = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").strip()
+    key = os.environ.get("LLM_API_KEY", "").strip()
+    if key.startswith("sk-or-v1-") and "api.openai.com" in base:
+        base = "https://openrouter.ai/api/v1"
+    return base, key
+
+
+_LLM_BASE_URL, _LLM_API_KEY = _resolve_llm_base_url()
 
 
 class Config:
@@ -34,8 +47,8 @@ class Config:
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@example.com")
 
     # ── LLM (OpenAI-compatible) ───────────────────────────────────────────
-    LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1")
-    LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+    LLM_BASE_URL = _LLM_BASE_URL
+    LLM_API_KEY = _LLM_API_KEY
     LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 
     # ── Speech Provider ───────────────────────────────────────────────────

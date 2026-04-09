@@ -2,12 +2,15 @@
 {% block title %}Admin Settings{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl w-full">
 
   <!-- Header -->
   <div class="mb-8">
     <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
     <p class="text-sm text-gray-500 mt-1">Configure AI providers, storage, and application behaviour.</p>
+    <p class="text-sm text-gray-500 mt-2">
+      <a href="{{ url_for('admin.api_keys') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">API keys &amp; providers</a>
+    </p>
   </div>
 
   <!-- Tabs -->
@@ -27,7 +30,7 @@
       <div class="card p-6 lg:p-8">
         <h2 class="text-base font-semibold text-gray-900 mb-1">LLM Provider</h2>
         <p class="text-sm text-gray-500 mb-6">
-          Supports any OpenAI-compatible endpoint — OpenAI, OpenRouter, Groq, Together AI, Azure OpenAI, etc.
+          Supports any OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, Together AI, Azure OpenAI, etc.
         </p>
 
         <form method="POST" action="{{ url_for('admin.settings', tab='llm') }}" class="space-y-5">
@@ -60,7 +63,13 @@
           </div>
 
           <div class="flex justify-end pt-2">
-            <button type="submit" class="btn-primary">Save LLM Settings</button>
+            <button type="submit" class="btn-primary inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              Save LLM settings
+            </button>
           </div>
         </form>
       </div>
@@ -96,7 +105,13 @@
           {% endfor %}
 
           <div class="flex justify-end pt-2">
-            <button type="submit" class="btn-primary">Save Speech Settings</button>
+            <button type="submit" class="btn-primary inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              Save speech settings
+            </button>
           </div>
         </form>
       </div>
@@ -142,7 +157,13 @@
           </div>
 
           <div class="flex justify-end pt-2">
-            <button type="submit" class="btn-primary">Save Storage Settings</button>
+            <button type="submit" class="btn-primary inline-flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              </svg>
+              Save storage settings
+            </button>
           </div>
         </form>
       </div>

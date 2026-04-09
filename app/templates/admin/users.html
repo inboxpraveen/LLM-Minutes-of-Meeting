@@ -2,7 +2,7 @@
 {% block title %}User Management{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
+<div class="max-w-5xl w-full">
 
   <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
@@ -65,25 +65,41 @@
             </td>
             <td class="td-cell text-right">
               {% if user.id != current_user.id %}
-              <div class="flex items-center justify-end gap-2">
-                <!-- Toggle active -->
+              <div class="flex items-center justify-end gap-2 flex-wrap">
                 <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
-                  <button type="submit" class="text-xs font-medium
+                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium
                     {% if user.is_active %}text-amber-600 hover:text-amber-800{% else %}text-green-600 hover:text-green-800{% endif %}">
-                    {{ 'Deactivate' if user.is_active else 'Activate' }}
+                    {% if user.is_active %}
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    Deactivate
+                    {% else %}
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Activate
+                    {% endif %}
                   </button>
                 </form>
-                <!-- Change role -->
-                <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}" class="flex">
+                <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}" class="inline-flex">
                   <input type="hidden" name="role" value="{{ 'user' if user.role == 'admin' else 'admin' }}" />
-                  <button type="submit" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                     Make {{ 'User' if user.role == 'admin' else 'Admin' }}
                   </button>
                 </form>
-                <!-- Delete -->
                 <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
                       onsubmit="return confirm('Delete user {{ user.username }}? This cannot be undone.')">
-                  <button type="submit" class="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
+                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
                 </form>
               </div>
               {% else %}
@@ -135,10 +151,20 @@
         </select>
       </div>
       <div class="flex gap-3 pt-2">
-        <button type="submit" class="btn-primary flex-1">Create User</button>
+        <button type="submit" class="btn-primary flex-1 inline-flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+          Create User
+        </button>
         <button type="button"
                 onclick="document.getElementById('create-user-modal').classList.add('hidden')"
-                class="btn-secondary">Cancel</button>
+                class="btn-secondary inline-flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Cancel
+        </button>
       </div>
     </form>
   </div>

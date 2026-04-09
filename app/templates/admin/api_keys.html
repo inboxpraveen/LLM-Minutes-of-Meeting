@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}API Keys{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl w-full">
+
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">API keys &amp; providers</h1>
+    <p class="text-sm text-gray-500 mt-1">
+      Configure LLM and speech transcription credentials used for meeting processing.
+    </p>
+    <p class="text-sm text-gray-500 mt-2">
+      <a href="{{ url_for('admin.settings') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">General settings</a>
+      <span class="text-gray-300 mx-2">·</span>
+      <span class="text-gray-400">Storage and retention are under General settings.</span>
+    </p>
+  </div>
+
+  <div class="space-y-8">
+    <div class="card p-6 lg:p-8">
+      <div class="flex items-start gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-semibold text-gray-900">LLM provider</h2>
+          <p class="text-sm text-gray-500 mt-0.5">OpenAI-compatible APIs: OpenAI, OpenRouter, Groq, Together, Azure, etc.</p>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.settings', tab='llm') }}" class="space-y-5">
+        <input type="hidden" name="tab" value="llm" />
+        <input type="hidden" name="redirect_to" value="api_keys" />
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Base URL</label>
+          <input type="url" name="llm_base_url"
+                 value="{{ config.get('llm_base_url').value if config.get('llm_base_url') else '' }}"
+                 class="input-field" placeholder="https://api.openai.com/v1" required />
+          <p class="text-xs text-gray-400 mt-1">Examples: <code class="text-xs">https://openrouter.ai/api/v1</code>, <code class="text-xs">https://api.groq.com/openai/v1</code></p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">API key</label>
+          <input type="password" name="llm_api_key"
+                 value="{% if config.get('llm_api_key') and config.get('llm_api_key').value %}••••••••{% endif %}"
+                 class="input-field font-mono" placeholder="sk-…" autocomplete="off" />
+          <p class="text-xs text-gray-400 mt-1">Leave as-is to keep the existing key. Enter a new value to replace it.</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Model name</label>
+          <input type="text" name="llm_model"
+                 value="{{ config.get('llm_model').value if config.get('llm_model') else 'gpt-4o-mini' }}"
+                 class="input-field font-mono" placeholder="gpt-4o-mini" required />
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button type="submit" class="btn-primary inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            Save LLM settings
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card p-6 lg:p-8">
+      <div class="flex items-start gap-3 mb-6">
+        <div class="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-base font-semibold text-gray-900">Speech transcription</h2>
+          <p class="text-sm text-gray-500 mt-0.5">Provider used to turn recordings into text.</p>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('admin.settings', tab='speech') }}" class="space-y-5">
+        <input type="hidden" name="tab" value="speech" />
+        <input type="hidden" name="redirect_to" value="api_keys" />
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Active provider</label>
+          <select name="speech_provider" class="input-field">
+            {% for val, label in [('deepgram','Deepgram'),('assemblyai','AssemblyAI'),('sarvam','Sarvam AI'),('elevenlabs','ElevenLabs')] %}
+            <option value="{{ val }}" {% if config.get('speech_provider') and config.get('speech_provider').value == val %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% for provider, label in [('deepgram','Deepgram'),('assemblyai','AssemblyAI'),('sarvam','Sarvam AI'),('elevenlabs','ElevenLabs')] %}
+        <div class="bg-gray-50 rounded-xl p-4">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">{{ label }} API key</label>
+          <input type="password" name="{{ provider }}_api_key"
+                 value="{% if config.get(provider + '_api_key') and config.get(provider + '_api_key').value %}••••••••{% endif %}"
+                 class="input-field font-mono" placeholder="API key for {{ label }}" autocomplete="off" />
+        </div>
+        {% endfor %}
+
+        <div class="flex justify-end pt-2">
+          <button type="submit" class="btn-primary inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            Save speech settings
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

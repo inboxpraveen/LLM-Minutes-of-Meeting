@@ -46,11 +46,21 @@ def settings():
             SystemConfig.set("meeting_retention_days", str(retention), updated_by=current_user.id)
 
         flash("Settings saved.", "success")
+        if request.form.get("redirect_to") == "api_keys":
+            return redirect(url_for("admin.api_keys"))
         return redirect(url_for("admin.settings", tab=tab))
 
     tab = request.args.get("tab", "llm")
     config = {row.key: row for row in SystemConfig.query.all()}
     return render_template("admin/settings.html", config=config, active_tab=tab)
+
+
+@admin_bp.route("/api-keys")
+@admin_required
+def api_keys():
+    """Admin-only page for LLM and speech API credentials (same forms as Settings tabs)."""
+    config = {row.key: row for row in SystemConfig.query.all()}
+    return render_template("admin/api_keys.html", config=config)
 
 
 @admin_bp.route("/users")
