@@ -26,6 +26,16 @@ A clean, modern web application that transcribes meeting recordings and generate
 
 ---
 
+## Screenshot
+
+![Home Page](assets/Homepage.png)
+
+![Home Page](assets/Upload.png)
+
+![Home Page](assets/Meeting-Outcomes.png)
+
+
+
 ## Quick Start
 
 ### 1. Configure environment

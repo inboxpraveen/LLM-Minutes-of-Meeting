@@ -163,9 +163,17 @@ class SarvamProvider(BaseSpeechProvider):
                 for detail in data.get("job_details", []):
                     inputs  = detail.get("inputs", [])
                     outputs = detail.get("outputs", [])
+                    task_state = detail.get("state", "")
                     if any(inp.get("file_name") == input_filename for inp in inputs):
+                        if task_state not in ("Success", ""):
+                            err = detail.get("error_message") or task_state
+                            raise RuntimeError(
+                                f"Sarvam transcription failed for '{input_filename}': {err}"
+                            )
                         if outputs:
-                            return outputs[0]["file_name"]
+                            # Prefer file_name; fall back to file_id
+                            out = outputs[0]
+                            return out.get("file_name") or out.get("file_id", "")
                 # Fallback: Sarvam names outputs as <stem>.json
                 return os.path.splitext(input_filename)[0] + ".json"
 
@@ -205,7 +213,15 @@ class SarvamProvider(BaseSpeechProvider):
             raise RuntimeError(
                 f"Failed to download Sarvam transcript: HTTP {resp.status_code}"
             )
-        return SarvamProvider._parse_result(resp.json())
+        try:
+            data = resp.json()
+        except Exception:
+            # Some presigned URLs may return plain text
+            text = resp.text.strip()
+            if text:
+                return text
+            raise RuntimeError("Sarvam transcript download returned empty or non-JSON response")
+        return SarvamProvider._parse_result(data)
 
     # ── Transcript parsing ──────────────────────────────────────────────────
 
@@ -215,16 +231,25 @@ class SarvamProvider(BaseSpeechProvider):
         Parse the output JSON downloaded from Sarvam.
 
         Tries (in order):
-          1. Diarized list  – list of {"speaker": "...", "transcript": "...", ...}
-          2. Diarized field – {"diarized_transcript": [...]}
-          3. Plain field    – {"transcript": "..."}
+          1. Diarized list  – list of {"speaker_id": "...", "transcript": "...", ...}
+          2. Diarized dict  – {"diarized_transcript": {"entries": [...]}}
+          3. Diarized list  – {"diarized_transcript": [...]}
+          4. Plain field    – {"transcript": "..."}
         """
         if isinstance(data, list):
+            # Top-level list of segments (unlikely but defensive)
             return SarvamProvider._build_diarized(data)
 
         if isinstance(data, dict):
+            # Check for diarized transcript in the Sarvam response format:
+            #   {"diarized_transcript": {"entries": [...]}}   ← actual Sarvam format
+            #   {"diarized_transcript": [...]}                 ← potential variant
             diarized = data.get("diarized_transcript") or data.get("diarized_output")
-            if isinstance(diarized, list) and diarized:
+            if isinstance(diarized, dict):
+                entries = diarized.get("entries", [])
+                if entries and isinstance(entries, list):
+                    return SarvamProvider._build_diarized(entries)
+            elif isinstance(diarized, list) and diarized:
                 return SarvamProvider._build_diarized(diarized)
 
             transcript = data.get("transcript", "").strip()
