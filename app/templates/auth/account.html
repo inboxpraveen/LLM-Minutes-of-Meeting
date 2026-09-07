@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Your account{% endblock %}
+
+{% block content %}
+<div class="max-w-xl w-full">
+  <div class="mb-8">
+    <h1 class="page-title">Your account</h1>
+    <p class="page-subtitle">Signed in as <strong>{{ current_user.username }}</strong> ({{ current_user.role }}).</p>
+  </div>
+
+  <div class="card p-6 lg:p-8">
+    <h2 class="section-title mb-6">Change password</h2>
+    <form method="POST" action="{{ url_for('auth.account') }}" class="space-y-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div>
+        <label for="current_password" class="label">Current password</label>
+        <input type="password" id="current_password" name="current_password" required
+               class="input-field" autocomplete="current-password" />
+      </div>
+      <div>
+        <label for="password" class="label">New password</label>
+        <input type="password" id="password" name="password" required minlength="8"
+               class="input-field" autocomplete="new-password" />
+        <p class="hint">At least 8 characters.</p>
+      </div>
+      <div>
+        <label for="confirm_password" class="label">Confirm new password</label>
+        <input type="password" id="confirm_password" name="confirm_password" required minlength="8"
+               class="input-field" autocomplete="new-password" />
+      </div>
+
+      <div class="flex justify-end">
+        <button type="submit" class="btn-primary">{{ icon('save', 'w-4 h-4') }} Update password</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template
-from flask_login import login_required, current_user
+from flask_login import current_user, login_required
+from sqlalchemy import func
+
+from app import health
 from app.extensions import db
-from app.models import Meeting
+from app.models import ACTIVE_STATUSES, Meeting
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -9,27 +12,23 @@ dashboard_bp = Blueprint("dashboard", __name__)
 @dashboard_bp.route("/")
 @login_required
 def index():
-    q = Meeting.query.filter_by(user_id=current_user.id)
+    query = db.session.query(Meeting)
+    if not current_user.is_admin:
+        query = query.filter(Meeting.user_id == current_user.id)
 
-    total = q.count()
-    completed = q.filter_by(status="completed").count()
-    processing = db.session.query(Meeting).filter(
-        Meeting.user_id == current_user.id,
-        Meeting.status.in_(["pending", "processing", "transcribing", "summarizing"]),
-    ).count()
-    failed = q.filter_by(status="failed").count()
-
-    recent = (
-        Meeting.query.filter_by(user_id=current_user.id)
-        .order_by(Meeting.created_at.desc())
-        .limit(10)
-        .all()
+    counts = dict(
+        query.with_entities(Meeting.status, func.count(Meeting.id)).group_by(Meeting.status).all()
     )
-
     stats = {
-        "total": total,
-        "completed": completed,
-        "processing": processing,
-        "failed": failed,
+        "total": sum(counts.values()),
+        "completed": counts.get("completed", 0),
+        "processing": sum(counts.get(status, 0) for status in ACTIVE_STATUSES),
+        "failed": counts.get("failed", 0),
     }
-    return render_template("dashboard/index.html", stats=stats, recent=recent)
+    recent = query.order_by(Meeting.created_at.desc()).limit(8).all()
+    return render_template(
+        "dashboard/index.html",
+        stats=stats,
+        recent=recent,
+        providers_ready=health.check_providers()["ok"],
+    )

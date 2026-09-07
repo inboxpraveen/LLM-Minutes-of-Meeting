@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }} | MoM AI</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body class="h-full font-sans antialiased bg-slate-50 flex items-center justify-center p-4">
+  <div class="text-center max-w-md">
+    <p class="text-6xl font-bold text-gray-200">{{ code }}</p>
+    <h1 class="text-xl font-semibold text-gray-900 mt-4">{{ title }}</h1>
+    <p class="text-sm text-gray-500 mt-2">{{ message }}</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn-primary mt-8">Back to dashboard</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# The repository stores text as LF. Checkouts keep whatever your OS prefers,
+# except for files that break when they carry CRLF into a Linux container.
+* text=auto
+
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

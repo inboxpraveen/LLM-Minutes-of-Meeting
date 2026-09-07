@@ -1,7 +1,23 @@
 from datetime import datetime, timezone
+
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app.extensions import db
+
+ACTIVE_STATUSES = ("queued", "converting", "transcribing", "summarizing")
+TERMINAL_STATUSES = ("completed", "failed", "cancelled")
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def as_utc(value: datetime | None) -> datetime | None:
+    """SQLite hands back naive datetimes; compare them as UTC."""
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 
 class User(UserMixin, db.Model):
@@ -11,9 +27,12 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="user")  # admin | user
+    role = db.Column(db.String(20), nullable=False, default="user")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=utcnow)
+    last_login_at = db.Column(db.DateTime)
+    failed_logins = db.Column(db.Integer, nullable=False, default=0)
+    locked_until = db.Column(db.DateTime)
 
     meetings = db.relationship("Meeting", backref="owner", lazy="dynamic")
 
@@ -27,6 +46,11 @@ class User(UserMixin, db.Model):
     def is_admin(self) -> bool:
         return self.role == "admin"
 
+    @property
+    def is_locked(self) -> bool:
+        locked = as_utc(self.locked_until)
+        return bool(locked and locked > utcnow())
+
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.role})>"
 
@@ -35,31 +59,74 @@ class Meeting(db.Model):
     __tablename__ = "meetings"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
 
     title = db.Column(db.String(200), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
     stored_filename = db.Column(db.String(255), nullable=False)
-    file_size = db.Column(db.BigInteger)  # bytes
+    file_size = db.Column(db.BigInteger)
+    duration_seconds = db.Column(db.Float)
 
-    # Processing
-    status = db.Column(db.String(20), nullable=False, default="pending")
-    # pending | processing | transcribing | summarizing | completed | failed
+    status = db.Column(db.String(20), nullable=False, default="queued", index=True)
     task_id = db.Column(db.String(255), index=True)
-    progress = db.Column(db.Integer, default=0)  # 0-100
+    progress = db.Column(db.Integer, default=0)
     error_message = db.Column(db.Text)
+    cancel_requested = db.Column(db.Boolean, nullable=False, default=False)
 
-    # Results
     transcript = db.Column(db.Text)
-    minutes_of_meeting = db.Column(db.Text)
+    minutes_of_meeting = db.Column(db.Text)  # Markdown
+    speech_provider = db.Column(db.String(40))
+    llm_model = db.Column(db.String(120))
 
-    # Metadata
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    expires_at = db.Column(db.DateTime, nullable=True)
-    deleted_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
+    started_at = db.Column(db.DateTime)
+    finished_at = db.Column(db.DateTime)
+    expires_at = db.Column(db.DateTime, index=True)
+    source_deleted_at = db.Column(db.DateTime)
+
+    events = db.relationship(
+        "MeetingEvent",
+        backref="meeting",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    @property
+    def is_active(self) -> bool:
+        return self.status in ACTIVE_STATUSES
+
+    @property
+    def has_source_file(self) -> bool:
+        return self.source_deleted_at is None
+
+    @property
+    def duration_label(self) -> str:
+        if not self.duration_seconds:
+            return "—"
+        total = int(self.duration_seconds)
+        return f"{total // 3600}h {total % 3600 // 60}m" if total >= 3600 else f"{total // 60}m {total % 60}s"
+
+    def log(self, message: str, level: str = "info") -> None:
+        db.session.add(MeetingEvent(meeting_id=self.id, level=level, message=message[:500]))
 
     def __repr__(self) -> str:
         return f"<Meeting {self.id}: {self.title} [{self.status}]>"
+
+
+class MeetingEvent(db.Model):
+    __tablename__ = "meeting_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    meeting_id = db.Column(
+        db.Integer, db.ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    level = db.Column(db.String(10), nullable=False, default="info")
+    message = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    def __repr__(self) -> str:
+        return f"<MeetingEvent {self.meeting_id}: {self.message[:40]}>"
 
 
 class SystemConfig(db.Model):
@@ -70,38 +137,8 @@ class SystemConfig(db.Model):
     value = db.Column(db.Text)
     description = db.Column(db.String(255))
     is_sensitive = db.Column(db.Boolean, default=False)
-    updated_at = db.Column(
-        db.DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-    )
-    updated_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
-
-    @classmethod
-    def get(cls, key: str, default=None):
-        row = cls.query.filter_by(key=key).first()
-        if row and row.value is not None:
-            return row.value
-        return default
-
-    @classmethod
-    def set(cls, key: str, value, description: str = None, is_sensitive: bool = False, updated_by: int = None):
-        row = cls.query.filter_by(key=key).first()
-        if row:
-            row.value = str(value) if value is not None else None
-            row.updated_at = datetime.now(timezone.utc)
-            if updated_by:
-                row.updated_by = updated_by
-        else:
-            row = cls(
-                key=key,
-                value=str(value) if value is not None else None,
-                description=description,
-                is_sensitive=is_sensitive,
-                updated_by=updated_by,
-            )
-            db.session.add(row)
-        db.session.commit()
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey("users.id"))
 
     def __repr__(self) -> str:
         return f"<SystemConfig {self.key}>"

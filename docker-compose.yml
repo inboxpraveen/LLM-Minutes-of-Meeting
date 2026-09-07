@@ -1,9 +1,38 @@
-services:
+name: mom-ai
 
-  # ── Redis (broker + result backend) ──────────────────────────────────
+x-app: &app
+  build:
+    context: .
+    args:
+      WITH_LOCAL_WHISPER: ${WITH_LOCAL_WHISPER:-false}
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    MOM_DATA_DIR: /data
+    CELERY_BROKER_URL: redis://redis:6379/0
+    CELERY_RESULT_BACKEND: redis://redis:6379/0
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    LOG_FORMAT: ${LOG_FORMAT:-console}
+  volumes:
+    - app_data:/data
+  # Lets you point the app at Ollama or LM Studio running on the host.
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+# Web starts first so it alone creates the database and the encryption key.
+x-after-web: &after-web
+  redis:
+    condition: service_healthy
+  web:
+    condition: service_healthy
+
+services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    command: redis-server --save 60 1 --appendonly no
     volumes:
       - redis_data:/data
     healthcheck:
@@ -12,65 +41,39 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Flask web application ─────────────────────────────────────────────
   web:
-    build: .
-    restart: unless-stopped
+    <<: *app
     ports:
       - "${APP_PORT:-5000}:5000"
-    env_file: .env
-    # Use Compose service hostname — .env often has localhost for local dev, which breaks inside containers.
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    volumes:
-      - uploads_data:/app/data/uploads
-      - db_data:/app/instance
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/healthz"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
       retries: 3
-      start_period: 20s
 
-  # ── Celery worker ─────────────────────────────────────────────────────
-  celery:
-    build: .
-    restart: unless-stopped
-    command: celery -A celery_worker:celery worker -l info -c 4
-    env_file: .env
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    volumes:
-      - uploads_data:/app/data/uploads
-      - db_data:/app/instance
-    depends_on:
-      redis:
-        condition: service_healthy
+  worker:
+    <<: *app
+    command: celery -A celery_worker:celery worker --loglevel=info --concurrency=${WORKER_CONCURRENCY:-2}
+    depends_on: *after-web
 
-  # ── Celery beat (periodic tasks — cleanup etc.) ───────────────────────
-  celery-beat:
-    build: .
-    restart: unless-stopped
-    command: celery -A celery_worker:celery beat -l info --scheduler celery.beat:PersistentScheduler
-    env_file: .env
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/0
-    volumes:
-      - uploads_data:/app/data/uploads
-      - db_data:/app/instance
-      - beat_data:/app/celerybeat
-    depends_on:
-      redis:
-        condition: service_healthy
+  beat:
+    <<: *app
+    command: celery -A celery_worker:celery beat --loglevel=info --schedule /data/celerybeat-schedule
+    depends_on: *after-web
+
+  # Optional Celery dashboard: docker compose --profile monitoring up
+  flower:
+    <<: *app
+    profiles: [monitoring]
+    command: celery -A celery_worker:celery flower --port=5555
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    depends_on: *after-web
 
 volumes:
+  app_data:
   redis_data:
-  uploads_data:
-  db_data:
-  beat_data:

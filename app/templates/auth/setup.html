@@ -1,0 +1,50 @@
+{% extends "auth/_shell.html" %}
+{% block title %}First run{% endblock %}
+{% block tagline %}Create your administrator account{% endblock %}
+{% block width %}max-w-lg{% endblock %}
+
+{% block card %}
+<div class="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-6 flex gap-3">
+  {{ icon('info', 'w-5 h-5 text-brand-500 flex-shrink-0 mt-0.5') }}
+  <p class="text-sm text-brand-700">
+    This account has full access to settings, API keys and users. Everything you enter is stored
+    on this machine only.
+  </p>
+</div>
+
+<form method="POST" action="{{ url_for('auth.setup') }}" class="space-y-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+  <div>
+    <label for="username" class="label">Username</label>
+    <input type="text" id="username" name="username" required value="{{ username }}"
+           class="input-field" placeholder="admin" autofocus autocomplete="username" />
+  </div>
+
+  <div>
+    <label for="email" class="label">Email address</label>
+    <input type="email" id="email" name="email" required value="{{ email }}"
+           class="input-field" placeholder="you@example.com" autocomplete="email" />
+  </div>
+
+  <div class="grid sm:grid-cols-2 gap-4">
+    <div>
+      <label for="password" class="label">Password</label>
+      <input type="password" id="password" name="password" required minlength="8"
+             class="input-field" autocomplete="new-password" />
+      <p class="hint">At least 8 characters.</p>
+    </div>
+    <div>
+      <label for="confirm_password" class="label">Confirm password</label>
+      <input type="password" id="confirm_password" name="confirm_password" required minlength="8"
+             class="input-field" autocomplete="new-password" />
+    </div>
+  </div>
+
+  <button type="submit" class="btn-primary w-full justify-center">
+    {{ icon('check-circle', 'w-4 h-4') }} Create account and continue
+  </button>
+</form>
+{% endblock %}
+
+{% block footnote %}Next you will add an AI provider key. Nothing is sent anywhere until you do.{% endblock %}

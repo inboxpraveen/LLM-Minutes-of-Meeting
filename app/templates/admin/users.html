@@ -1,172 +1,123 @@
 {% extends "base.html" %}
-{% block title %}User Management{% endblock %}
+{% block title %}Users{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl w-full">
+<div class="max-w-5xl w-full" x-data="{ showForm: false }">
 
-  <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Users</h1>
-      <p class="text-sm text-gray-500 mt-1">Manage user accounts and roles</p>
+      <h1 class="page-title">Users</h1>
+      <p class="page-subtitle">Admins configure providers and see every meeting. Users see only their own.</p>
     </div>
-    <button onclick="document.getElementById('create-user-modal').classList.remove('hidden')"
-            class="btn-primary self-start sm:self-auto">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      Add User
-    </button>
+    <button @click="showForm = !showForm" class="btn-primary">{{ icon('plus', 'w-4 h-4') }} Add user</button>
   </div>
 
-  <!-- Users table -->
+  <div x-show="showForm" x-cloak class="card p-6 lg:p-8 mb-6">
+    <h2 class="section-title mb-6">New user</h2>
+    <form method="POST" action="{{ url_for('admin.create_user') }}" class="grid sm:grid-cols-2 gap-5">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div>
+        <label for="username" class="label">Username</label>
+        <input type="text" id="username" name="username" required class="input-field" autocomplete="off" />
+      </div>
+      <div>
+        <label for="email" class="label">Email address</label>
+        <input type="email" id="email" name="email" required class="input-field" autocomplete="off" />
+      </div>
+      <div>
+        <label for="password" class="label">Password</label>
+        <input type="password" id="password" name="password" required minlength="8"
+               class="input-field" autocomplete="new-password" />
+        <p class="hint">At least 8 characters.</p>
+      </div>
+      <div>
+        <label for="role" class="label">Role</label>
+        <select id="role" name="role" class="input-field">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="sm:col-span-2 flex justify-end gap-3">
+        <button type="button" @click="showForm = false" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">{{ icon('check-circle', 'w-4 h-4') }} Create user</button>
+      </div>
+    </form>
+  </div>
+
   <div class="card overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead>
-          <tr class="bg-gray-50 border-b border-gray-100">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
             <th class="th-cell">User</th>
-            <th class="th-cell hidden sm:table-cell">Email</th>
             <th class="th-cell">Role</th>
             <th class="th-cell">Status</th>
-            <th class="th-cell hidden md:table-cell">Joined</th>
+            <th class="th-cell hidden md:table-cell">Last signed in</th>
             <th class="th-cell text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
           {% for user in users %}
-          <tr class="hover:bg-gray-50/50 transition-colors">
+          <tr class="hover:bg-gray-50">
             <td class="td-cell">
               <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                  <span class="text-xs font-semibold text-indigo-600">{{ user.username[0].upper() }}</span>
+                <div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
+                  <span class="text-xs font-semibold text-brand-600">{{ user.username[0]|upper }}</span>
                 </div>
-                <span class="font-medium text-gray-900">{{ user.username }}</span>
-                {% if user.id == current_user.id %}
-                  <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">You</span>
-                {% endif %}
+                <div class="min-w-0">
+                  <p class="font-medium text-gray-900 truncate">{{ user.username }}</p>
+                  <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+                </div>
               </div>
             </td>
-            <td class="td-cell hidden sm:table-cell text-gray-500">{{ user.email }}</td>
             <td class="td-cell">
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                           {% if user.role == 'admin' %}bg-indigo-50 text-indigo-700{% else %}bg-gray-100 text-gray-600{% endif %}">
-                {{ user.role | capitalize }}
-              </span>
+              {% if user.id == current_user.id %}
+              <span class="text-gray-500 capitalize">{{ user.role }} (you)</span>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <select name="role" onchange="this.form.submit()" class="input-field py-1 text-xs w-24">
+                  <option value="user" {{ 'selected' if user.role == 'user' }}>User</option>
+                  <option value="admin" {{ 'selected' if user.role == 'admin' }}>Admin</option>
+                </select>
+              </form>
+              {% endif %}
             </td>
             <td class="td-cell">
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium
-                           {% if user.is_active %}bg-green-50 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
-                {{ 'Active' if user.is_active else 'Inactive' }}
+              <span class="status-badge {{ 'status-completed' if user.is_active else 'status-failed' }}">
+                {{ 'Active' if user.is_active else 'Disabled' }}
               </span>
+              {% if user.is_locked %}<span class="status-badge status-queued ml-1">Locked</span>{% endif %}
             </td>
             <td class="td-cell hidden md:table-cell text-gray-500">
-              {{ user.created_at.strftime('%b %d, %Y') if user.created_at else '—' }}
+              {{ user.last_login_at.strftime('%d %b %Y') if user.last_login_at else 'Never' }}
             </td>
-            <td class="td-cell text-right">
-              {% if user.id != current_user.id %}
-              <div class="flex items-center justify-end gap-2 flex-wrap">
-                <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
-                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium
-                    {% if user.is_active %}text-amber-600 hover:text-amber-800{% else %}text-green-600 hover:text-green-800{% endif %}">
-                    {% if user.is_active %}
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                    Deactivate
-                    {% else %}
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Activate
-                    {% endif %}
-                  </button>
+            <td class="td-cell">
+              <div class="flex items-center justify-end gap-2">
+                <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}"
+                      onsubmit="return promptPassword(this)">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <input type="hidden" name="password" />
+                  <button type="submit" class="link-action">Reset password</button>
                 </form>
-                <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}" class="inline-flex">
-                  <input type="hidden" name="role" value="{{ 'user' if user.role == 'admin' else 'admin' }}" />
-                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    Make {{ 'User' if user.role == 'admin' else 'Admin' }}
-                  </button>
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="link-action">{{ 'Disable' if user.is_active else 'Enable' }}</button>
                 </form>
                 <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
-                      onsubmit="return confirm('Delete user {{ user.username }}? This cannot be undone.')">
-                  <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
+                      onsubmit="return confirm('Delete this user and all of their meetings?')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  <button type="submit" class="link-action text-red-600 hover:text-red-700">Delete</button>
                 </form>
+                {% endif %}
               </div>
-              {% else %}
-              <span class="text-xs text-gray-300">—</span>
-              {% endif %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
-
-</div>
-
-<!-- Create User Modal -->
-<div id="create-user-modal"
-     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50"
-     onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
-    <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-semibold text-gray-900">Create New User</h3>
-      <button onclick="document.getElementById('create-user-modal').classList.add('hidden')"
-              class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-
-    <form method="POST" action="{{ url_for('admin.create_user') }}" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
-        <input type="text" name="username" class="input-field" required placeholder="johndoe" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-        <input type="email" name="email" class="input-field" required placeholder="john@example.com" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-        <input type="password" name="password" class="input-field" required placeholder="Minimum 8 characters" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
-        <select name="role" class="input-field">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="btn-primary flex-1 inline-flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-          </svg>
-          Create User
-        </button>
-        <button type="button"
-                onclick="document.getElementById('create-user-modal').classList.add('hidden')"
-                class="btn-secondary inline-flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Cancel
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 {% endblock %}

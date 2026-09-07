@@ -1,12 +1,9 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 *.egg-info/
 dist/
 build/
-.eggs/
 
 # Virtual environments
 .venv/
@@ -17,37 +14,32 @@ ENV/
 # Environment & secrets
 .env
 .env.*
-*.env
 !.env.example
 
-# Database
+# Local data (databases, uploads, logs, keys)
 instance/
+data/
 *.db
 *.sqlite3
-
-# Uploaded files
-data/
+*.log
+logs/
 
 # Celery
-celerybeat-schedule
-celerybeat-schedule.db
+celerybeat-schedule*
 celerybeat.pid
 
-# IDE
+# Node (only used to rebuild tailwind.css, which is committed)
+node_modules/
+package-lock.json
+
+# Tooling
 .vscode/
 .idea/
+.pytest_cache/
+.coverage
+htmlcov/
 *.swp
-*.swo
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Coverage
-.coverage
-htmlcov/
-.pytest_cache/

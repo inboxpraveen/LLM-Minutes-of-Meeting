@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}System{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl w-full">
+
+  <div class="flex items-center justify-between gap-4 mb-8">
+    <div>
+      <h1 class="page-title">System</h1>
+      <p class="page-subtitle">Health of every moving part, and where your data lives.</p>
+    </div>
+    <a href="{{ url_for('admin.system') }}" class="btn-secondary">{{ icon('refresh', 'w-4 h-4') }} Refresh</a>
+  </div>
+
+  <div class="card divide-y divide-gray-50 mb-6">
+    {% for name, check in checks.items() %}
+    <div class="flex items-start gap-3 px-6 py-4">
+      {% if check.ok %}
+        {{ icon('check-circle', 'w-5 h-5 text-green-500 flex-shrink-0 mt-0.5') }}
+      {% else %}
+        {{ icon('alert', 'w-5 h-5 text-red-500 flex-shrink-0 mt-0.5') }}
+      {% endif %}
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-gray-900">{{ name }}</p>
+        <p class="text-sm {{ 'text-gray-500' if check.ok else 'text-red-600' }} break-words">{{ check.detail }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+    <div class="card p-6">
+      <h2 class="section-title mb-4">Jobs</h2>
+      <dl class="space-y-2 text-sm">
+        {% for status in ['queued','converting','transcribing','summarizing','completed','failed','cancelled'] %}
+        <div class="flex justify-between">
+          <dt class="text-gray-500 capitalize">{{ status }}</dt>
+          <dd class="font-medium text-gray-900">{{ status_counts.get(status, 0) }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </div>
+
+    <div class="card p-6">
+      <h2 class="section-title mb-4">Storage</h2>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between gap-4">
+          <dt class="text-gray-500 flex-shrink-0">Recordings</dt>
+          <dd class="font-medium text-gray-900">{{ upload_bytes|filesize }}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-500 mb-1">Data directory</dt>
+          <dd class="font-mono text-xs text-gray-700 break-all bg-gray-50 rounded-lg p-2">{{ data_dir }}</dd>
+        </div>
+      </dl>
+      <p class="hint mt-3">
+        The database, uploads, logs and the encryption key all live here. Back up this folder.
+      </p>
+    </div>
+  </div>
+
+  {% if recent_failures %}
+  <div class="card overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-100"><h2 class="section-title">Recent failures</h2></div>
+    <ul class="divide-y divide-gray-50">
+      {% for meeting in recent_failures %}
+      <li class="px-6 py-3">
+        <a href="{{ url_for('meetings.detail', meeting_id=meeting.id) }}"
+           class="text-sm font-medium text-gray-900 hover:text-brand-600">{{ meeting.title }}</a>
+        <p class="text-xs text-red-600 mt-0.5 break-words">{{ meeting.error_message }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="card overflow-hidden" x-data="{ open: false }">
+    <button @click="open = !open" class="w-full flex items-center justify-between px-6 py-4 text-left">
+      <h2 class="section-title">Application log</h2>
+      <span class="text-sm text-brand-600" x-text="open ? 'Hide' : 'Show last 300 lines'"></span>
+    </button>
+    <pre x-show="open" x-cloak class="log-box">{{ log_lines | join('\n') }}</pre>
+  </div>
+
+  <p class="text-xs text-gray-400 mt-6">
+    Prometheus metrics are exposed at <code>/metrics</code>. Liveness is <code>/healthz</code> and
+    readiness is <code>/readyz</code>.
+  </p>
+</div>
+{% endblock %}

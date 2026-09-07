@@ -10,157 +10,224 @@ If you’re looking for a meeting recording API, consider checking out [Recall.a
 
 ---
 
-A clean, modern web application that transcribes meeting recordings and generates structured **Minutes of Meeting** using your preferred AI providers. Upload once, get professional meeting minutes automatically.
+Upload a meeting recording, get structured minutes back. Transcription and summarisation run on
+providers **you** choose — a hosted API, or a model running on your own machine. Everything is
+configured from the app itself, and everything it stores stays on your computer.
+
+Runs anywhere Docker runs: Windows, macOS, Linux.
 
 ---
 
-## Features
+## What you get
 
-- **AI Transcription** — Deepgram, AssemblyAI, Sarvam AI, or ElevenLabs
-- **Smart Summarization** — Any OpenAI-compatible LLM (OpenAI, OpenRouter, Groq, Together, Azure, Ollama, etc.)
-- **Background Processing** — Celery + Redis; upload and come back when it's done
-- **Auto Cleanup** — Files auto-deleted after a configurable number of days
-- **Two Roles** — Admin (full config access) + User (upload & view only)
-- **Modern UI** — Light-themed, fully responsive, smooth animations
-- **Docker-ready** — One command to spin up everything
+- **Your choice of transcription** — Deepgram, AssemblyAI, ElevenLabs Scribe, Sarvam AI, any
+  OpenAI-compatible endpoint (OpenAI, Groq, Speaches, LocalAI), or Whisper running locally with no API key
+- **Your choice of LLM** — any OpenAI-compatible API: OpenAI, OpenRouter, Groq, Together, Fireworks,
+  Mistral, Cerebras, Anthropic, Gemini, or Ollama / LM Studio / vLLM on your own hardware
+- **Speaker-labelled transcripts** so decisions and action items get attributed correctly
+- **Any meeting length** — long recordings are transcribed and summarised in parts, then merged, so
+  neither the upload limit nor the model context window caps you
+- **Real background jobs** — Celery and Redis, with live progress, an activity log, cancel and retry
+- **Configured from the screen** — API keys, models, prompts, retention: no editing files, no restarts
+- **Nothing phones home** — no CDNs, no fonts, no telemetry. The only outbound calls are to the AI
+  provider you configured
+- **Built to run** — health and readiness endpoints, Prometheus metrics, structured logs, automatic
+  retention cleanup and stale-job recovery
 
 ---
 
-## Screenshot
+## Screenshots
 
 ![Home Page](assets/Homepage.png)
 
-![Home Page](assets/Upload.png)
+![Upload](assets/Upload.png)
 
-![Home Page](assets/Meeting-Outcomes.png)
+![Meeting Outcomes](assets/Meeting-Outcomes.png)
 
+---
 
+## Quick start
 
-## Quick Start
-
-### 1. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env — set your API keys
-```
-
-### 2a. Docker (recommended)
+### Docker (recommended)
 
 ```bash
+git clone https://github.com/inboxpraveen/LLM-Minutes-of-Meeting.git
+cd LLM-Minutes-of-Meeting
 docker compose up --build
 ```
 
-App is available at `http://localhost:5000`
+Open **http://localhost:5000**. That is the whole setup — no `.env` file, no API keys on disk.
 
-### 2b. Local development
+The first screen asks you to create an administrator account. After that, go to **Settings** and add
+an LLM endpoint and a transcription provider. Press **Test** on each to confirm they work before you
+upload anything.
 
-**Prerequisites:** Python 3.12+, Redis, ffmpeg
+Want transcription with no API key at all? Build with Whisper included:
 
 ```bash
-# Install dependencies
+WITH_LOCAL_WHISPER=true docker compose up --build
+```
+
+Then choose **Local Whisper** as the speech provider. On Windows PowerShell, use
+`$env:WITH_LOCAL_WHISPER="true"` on the line before.
+
+### Without Docker
+
+You need Python 3.10 or newer, [ffmpeg](https://ffmpeg.org/download.html) on your `PATH`, and Redis.
+
+```bash
 pip install -r requirements.txt
 
-# Start Redis (one terminal)
-redis-server
+redis-server                                              # terminal 1
+celery -A celery_worker:celery worker -l info             # terminal 2
+celery -A celery_worker:celery beat -l info               # terminal 3
+python run.py                                             # terminal 4
+```
 
-# Start Celery worker (another terminal)
-celery -A celery_worker:celery worker -l info
+Optional: `pip install -r requirements-local.txt` adds local Whisper.
 
-# Start Celery beat for periodic cleanup (another terminal)
-celery -A celery_worker:celery beat -l info
+---
 
-# Start Flask app
-python run.py
+## Choosing providers
+
+Both choices are made in **Settings**. Neither is locked in — switch whenever you like.
+
+### Transcription
+
+| Provider | Speaker labels | Notes |
+| --- | --- | --- |
+| **Deepgram** | Yes | Fast and accurate. Default model `nova-3`. |
+| **AssemblyAI** | Yes | Strong accuracy, straightforward pricing. Default model `universal`. |
+| **ElevenLabs Scribe** | Yes | Very good on multilingual audio. Handles stereo recordings per channel. |
+| **Sarvam AI** | Yes | Best for Indian languages and code-mixed speech. Uses the batch API, so length is unlimited. |
+| **OpenAI-compatible** | No | Anything exposing `/v1/audio/transcriptions`: OpenAI, Groq, or a local server. Long files are split automatically. |
+| **Local Whisper** | No | Runs on your machine. No API key, no per-minute cost, nothing leaves the computer. |
+
+### Summarisation
+
+Any OpenAI-compatible chat API. The Settings screen has presets that fill in the base URL for you:
+
+| Provider | Base URL |
+| --- | --- |
+| OpenAI | `https://api.openai.com/v1` |
+| OpenRouter | `https://openrouter.ai/api/v1` |
+| Groq | `https://api.groq.com/openai/v1` |
+| Together AI | `https://api.together.xyz/v1` |
+| Fireworks AI | `https://api.fireworks.ai/inference/v1` |
+| Mistral | `https://api.mistral.ai/v1` |
+| Cerebras | `https://api.cerebras.ai/v1` |
+| Anthropic | `https://api.anthropic.com/v1/` |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` |
+| Ollama | `http://localhost:11434/v1` |
+| LM Studio | `http://localhost:1234/v1` |
+
+> Running Ollama or LM Studio on your machine while the app is in Docker? Use
+> `host.docker.internal` instead of `localhost`.
+
+Use your API key with the matching base URL. An OpenRouter key on OpenAI's URL returns a 401.
+
+---
+
+## Where your data lives
+
+Everything the app stores — the database, uploaded recordings, logs, and the key that encrypts your
+API keys — sits in one directory on your machine:
+
+| Platform | Location |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\MoM-AI` |
+| macOS | `~/Library/Application Support/MoM-AI` |
+| Linux | `~/.local/share/MoM-AI` |
+| Docker | the `app_data` volume, mounted at `/data` |
+
+Back up that directory and you have backed up the whole application. Set `MOM_DATA_DIR` to move it.
+
+API keys are encrypted at rest with a key generated on first run and stored in the same directory.
+
+---
+
+## Running it properly
+
+| Endpoint | Purpose |
+| --- | --- |
+| `/healthz` | Liveness. Returns 200 whenever the web process is up. |
+| `/readyz` | Readiness. Checks the database, the job queue and ffmpeg. |
+| `/metrics` | Prometheus metrics: request rates, job durations, meetings by status. |
+
+**Admin → System** shows the same checks in the browser, plus disk usage, job counts, recent
+failures and the tail of the application log.
+
+Optional Celery dashboard:
+
+```bash
+docker compose --profile monitoring up
+```
+
+Full details are in **[docs/operations.md](docs/operations.md)**.
+
+---
+
+## Documentation
+
+| Guide | Contents |
+| --- | --- |
+| [docs/configuration.md](docs/configuration.md) | Every setting, and the handful of environment variables |
+| [docs/providers.md](docs/providers.md) | Getting a key for each provider, and running models locally |
+| [docs/operations.md](docs/operations.md) | Monitoring, backups, upgrades, scaling, reverse proxies |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | What to do when something does not work |
+
+---
+
+## Project structure
+
+```
+app/
+├── __init__.py          App factory, error handlers, Celery wiring
+├── config.py            Process-level configuration
+├── settings.py          Runtime settings: the schema behind the Settings screen
+├── security.py          Local key file, encryption of stored secrets
+├── paths.py             OS-specific data directory
+├── models.py            User, Meeting, MeetingEvent, SystemConfig
+├── health.py            Dependency checks for /readyz and Admin → System
+├── logging_setup.py     Structured logging with request ids
+├── metrics.py           Prometheus collectors
+├── auth/                First-run setup, sign in, account
+├── dashboard/           Home
+├── meetings/            Upload, list, detail, cancel, retry, download
+├── admin/               Settings, users, system
+├── api/                 Status polling, health, metrics
+├── tasks/               process (the pipeline) and maintenance (retention, stale jobs)
+├── providers/
+│   ├── llm/             OpenAI-compatible client and chunked summarisation
+│   └── speech/          Deepgram, AssemblyAI, ElevenLabs, Sarvam, OpenAI-compatible, local Whisper
+├── utils/               ffmpeg helpers, markdown rendering and sanitising
+├── static/              Compiled CSS and JS, no CDN
+└── templates/           Jinja2 templates
+tests/                   pytest suite
 ```
 
 ---
 
-## Default Login
+## Development
 
-
-| Field    | Value       |
-| -------- | ----------- |
-| Username | `admin`     |
-| Password | `admin@123` |
-
-
-> Change these in `.env` before deploying.
-
----
-
-## Admin Panel
-
-Log in as admin and navigate to **Settings** to configure:
-
-
-| Tab                 | What you can set                              |
-| ------------------- | --------------------------------------------- |
-| **LLM Provider**    | Base URL, API key, model name                 |
-| **Speech Provider** | Active provider, API keys for all 4 providers |
-| **Storage**         | Retention days (how long files are kept)      |
-
-
-Navigate to **Users** to create/manage user accounts.
-
----
-
-## LLM Provider Examples
-
-The app uses the OpenAI client format — works with any compatible endpoint:
-
-
-| Provider       | `LLM_BASE_URL`                   | Example model                    |
-| -------------- | -------------------------------- | -------------------------------- |
-| OpenAI         | `https://api.openai.com/v1`      | `gpt-4o`                         |
-| OpenRouter     | `https://openrouter.ai/api/v1`   | `anthropic/claude-opus-4`        |
-| Groq           | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile`        |
-| Together AI    | `https://api.together.xyz/v1`    | `meta-llama/Llama-3-70b-chat-hf` |
-| Ollama (local) | `http://localhost:11434/v1`      | `llama3.2`                       |
-
-
----
-
-## Speech Providers
-
-All four providers produce **speaker-labelled transcripts** when diarization is available (e.g. `[Speaker 0]: …`, `[speaker_0]: …`). This gives the LLM enough context to correctly attribute decisions and action items in the Minutes of Meeting.
-
-| Provider | Model | Key capabilities |
-|---|---|---|
-| **Deepgram** | Nova-3 | Fastest; word-level diarization via `utterances`; paragraph-formatted output |
-| **AssemblyAI** | Best (auto) | High accuracy; speaker diarization |
-| **Sarvam AI** | saarika:v2.5 | Batch Job API — no duration limit; best for Indian languages + English; diarization (beta) |
-| **ElevenLabs** | Scribe v2 | Multichannel support (stereo → per-channel speakers); single-channel diarization |
-
-> **Sarvam note:** The direct `/speech-to-text` endpoint only accepts ≤ 30 seconds of audio. The provider now uses the full Batch Job pipeline (`/speech-to-text/job/v1`) which handles meeting recordings of any length.
-
-
----
-
-## Project Structure
-
-```
-├── app/
-│   ├── __init__.py          # App factory + seeding
-│   ├── config.py            # All configuration
-│   ├── extensions.py        # db, login_manager, celery
-│   ├── models.py            # User, Meeting, SystemConfig
-│   ├── auth/                # Login / logout
-│   ├── dashboard/           # Dashboard home
-│   ├── meetings/            # Upload, list, detail, delete
-│   ├── admin/               # Settings + user management
-│   ├── api/                 # REST endpoints (status polling)
-│   ├── tasks/               # Celery tasks (process + cleanup)
-│   ├── providers/
-│   │   ├── llm/             # OpenAI-compatible LLM client
-│   │   └── speech/          # Deepgram, AssemblyAI, Sarvam, ElevenLabs
-│   ├── utils/               # ffmpeg audio conversion
-│   ├── static/              # CSS + JS
-│   └── templates/           # Jinja2 HTML templates
-├── celery_worker.py         # Celery entry point
-├── run.py                   # Flask entry point
-├── Dockerfile
-├── docker-compose.yml
-└── .env.example
+```bash
+pip install -r requirements-dev.txt
+pytest
 ```
 
+The stylesheet at `app/static/css/tailwind.css` is committed so the app needs no build step. If you
+change templates, rebuild it:
+
+```bash
+npm install && npm run build:css
+# or, with no Node installed:
+docker run --rm -v "$PWD":/work -w /work node:20-alpine \
+  npx -y tailwindcss@3.4.17 -c tailwind.config.js \
+  -i app/static/css/tailwind.src.css -o app/static/css/tailwind.css --minify
+```
+
+---
+
+## License
+
+[MIT](LICENSE)

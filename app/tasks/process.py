@@ -1,75 +1,135 @@
-import os
-import tempfile
 import logging
+import os
+import shutil
+import tempfile
+
+from celery.exceptions import SoftTimeLimitExceeded
+
+from app import settings
 from app.extensions import celery, db
-from app.models import Meeting
+from app.models import Meeting, utcnow
+from app.providers.llm import generate_minutes, get_llm_client
+from app.providers.speech import get_speech_provider
+from app.utils.audio import convert_to_wav, probe_duration
+from app.utils.storage import recording_path, remove_recording
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger("mom.task")
 
 
-@celery.task(bind=True, name="app.tasks.process.process_meeting", max_retries=2)
+class Cancelled(Exception):
+    pass
+
+
+@celery.task(bind=True, name="app.tasks.process.process_meeting")
 def process_meeting(self, meeting_id: int) -> dict:
-    """
-    Full meeting processing pipeline:
-      1. Convert audio to WAV
-      2. Transcribe via configured speech provider
-      3. Generate minutes of meeting via configured LLM
-      4. Persist results and clean up temp files
-    """
+    """Convert the recording, transcribe it, then write the minutes."""
     meeting = db.session.get(Meeting, meeting_id)
-    if not meeting:
-        raise ValueError(f"Meeting {meeting_id} not found")
-
-    wav_path = None
-
-    def _update(status: str, progress: int, **kwargs):
-        meeting.status = status
-        meeting.progress = progress
-        for k, v in kwargs.items():
-            setattr(meeting, k, v)
-        db.session.commit()
-
-    try:
-        from flask import current_app
-        upload_folder = current_app.config["UPLOAD_FOLDER"]
-        audio_path = os.path.join(upload_folder, meeting.stored_filename)
-
-        # ── Step 1: Convert audio ───────────────────────────────────────────
-        _update("processing", 10)
-        from app.utils.audio import convert_to_wav
-        tmp_dir = tempfile.mkdtemp()
-        wav_path = convert_to_wav(audio_path, output_dir=tmp_dir)
-        _update("processing", 30)
-
-        # ── Step 2: Transcribe ──────────────────────────────────────────────
-        _update("transcribing", 35)
-        from app.providers.speech import get_speech_provider
-        speech_provider = get_speech_provider()
-        transcript = speech_provider.transcribe_file(wav_path)
-        _update("transcribing", 65, transcript=transcript)
-
-        # ── Step 3: Generate Minutes of Meeting ─────────────────────────────
-        _update("summarizing", 70)
-        from app.providers.llm import get_llm_client
-        import markdown as md_lib
-        llm = get_llm_client()
-        minutes_md = llm.generate_minutes(transcript)
-        minutes_html = md_lib.markdown(minutes_md, extensions=["tables", "nl2br"])
-        _update("summarizing", 90, minutes_of_meeting=minutes_html)
-
-        # ── Step 4: Complete ─────────────────────────────────────────────────
-        _update("completed", 100, transcript=transcript, minutes_of_meeting=minutes_html)
+    if meeting is None:
+        log.warning("Meeting %s no longer exists", meeting_id)
+        return {"meeting_id": meeting_id, "status": "missing"}
+    if meeting.status == "completed":
         return {"meeting_id": meeting_id, "status": "completed"}
 
-    except Exception as exc:
-        logger.exception("process_meeting failed for meeting %d", meeting_id)
-        _update("failed", 0, error_message=str(exc))
+    config = settings.snapshot()
+    workdir = tempfile.mkdtemp(prefix="mom-")
+    meeting.started_at = utcnow()
+    meeting.error_message = None
+    meeting.task_id = self.request.id or meeting.task_id
+
+    def step(status: str, progress: int, message: str | None = None) -> None:
+        meeting.status = status
+        meeting.progress = progress
+        if message:
+            meeting.log(message)
+        db.session.commit()
+
+    def guard() -> None:
+        db.session.commit()  # persists pending changes and expires the row, so this re-reads it
+        if meeting.cancel_requested:
+            raise Cancelled()
+
+    try:
+        source = recording_path(meeting)
+        if not os.path.exists(source):
+            raise RuntimeError("The uploaded recording is no longer on disk.")
+
+        guard()
+        step("converting", 5, "Preparing audio")
+        audio = convert_to_wav(source, workdir)
+        meeting.duration_seconds = probe_duration(audio)
+        step("converting", 15, f"Audio ready ({meeting.duration_label})")
+
+        guard()
+        provider = get_speech_provider(config)
+        meeting.speech_provider = provider.name
+        step("transcribing", 20, f"Transcribing with {provider.label}")
+        transcript = (provider.transcribe(audio) or "").strip()
+        if not transcript:
+            raise RuntimeError(
+                f"{provider.label} returned an empty transcript. "
+                "The recording may be silent or in an unsupported language."
+            )
+        meeting.transcript = transcript
+        step("transcribing", 65, f"Transcript ready ({len(transcript.split()):,} words)")
+
+        guard()
+        client = get_llm_client(config)
+        meeting.llm_model = client.model
+        step("summarizing", 70, f"Writing minutes with {client.model}")
+
+        def on_progress(done: int, total: int) -> None:
+            step("summarizing", 70 + int(25 * done / total), f"Summarised part {done} of {total}")
+
+        meeting.minutes_of_meeting = generate_minutes(
+            client,
+            transcript,
+            config.get("minutes_prompt") or settings.DEFAULT_MINUTES_PROMPT,
+            _positive(config.get("transcript_chunk_chars"), 48000),
+            on_progress,
+        )
+
+        meeting.finished_at = utcnow()
+        step("completed", 100, "Minutes ready")
+        _discard_source_if_requested(meeting, config)
+        return {"meeting_id": meeting_id, "status": "completed"}
+
+    except Cancelled:
+        meeting.finished_at = utcnow()
+        step("cancelled", meeting.progress or 0, "Cancelled")
+        return {"meeting_id": meeting_id, "status": "cancelled"}
+
+    except SoftTimeLimitExceeded:
+        _fail(meeting, "The job exceeded the configured time limit. Raise it in Settings → Processing.")
         raise
 
+    except Exception as exc:
+        log.exception("Processing failed for meeting %s", meeting_id)
+        _fail(meeting, str(exc) or exc.__class__.__name__)
+        return {"meeting_id": meeting_id, "status": "failed"}
+
     finally:
-        if wav_path and os.path.exists(wav_path):
-            try:
-                os.remove(wav_path)
-                os.rmdir(os.path.dirname(wav_path))
-            except OSError:
-                pass
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _fail(meeting: Meeting, message: str) -> None:
+    meeting.status = "failed"
+    meeting.error_message = message[:2000]
+    meeting.finished_at = utcnow()
+    meeting.log(message, level="error")
+    db.session.commit()
+
+
+def _discard_source_if_requested(meeting: Meeting, config: dict) -> None:
+    if str(config.get("keep_source_after_processing", "true")).lower() in {"1", "true", "yes", "on"}:
+        return
+    if remove_recording(meeting):
+        meeting.source_deleted_at = utcnow()
+        meeting.log("Recording deleted after processing")
+        db.session.commit()
+
+
+def _positive(value, fallback: int) -> int:
+    try:
+        return max(2000, int(float(value)))
+    except (TypeError, ValueError):
+        return fallback

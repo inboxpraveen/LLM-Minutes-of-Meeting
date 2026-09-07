@@ -1,0 +1,12 @@
+{
+  "name": "mom-ai-styles",
+  "private": true,
+  "description": "Builds app/static/css/tailwind.css, which is committed so the app needs no CDN.",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i app/static/css/tailwind.src.css -o app/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i app/static/css/tailwind.src.css -o app/static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

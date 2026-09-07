@@ -1,0 +1,3 @@
+# Optional: run transcription on this machine with no API key and no network calls.
+# Adds roughly 500 MB to the image. Enable in Docker with WITH_LOCAL_WHISPER=true.
+faster-whisper==1.2.1
